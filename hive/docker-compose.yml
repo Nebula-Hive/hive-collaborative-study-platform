@@ -1,7 +1,7 @@
 version: "3.8"
 services:
   mongo:
-    image: mongo:6
+    image: localhost:5000/mongo:6
     restart: unless-stopped
     ports:
       - "27017:27017"

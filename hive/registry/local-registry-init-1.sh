@@ -7,6 +7,8 @@ REGISTRY_CONTAINER_NAME=local-registry
 # List of images
 IMAGES=(
   "nginx-custom:alpine ./nginx"
+  "node:20-alpine ./node"
+  "python:3.11-slim ./python"
 )
 
 # Step 0: Cleanup using Docker built-in command
