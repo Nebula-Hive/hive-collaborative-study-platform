@@ -11,6 +11,10 @@ class RagQuery(BaseModel):
 def read_root():
     return {"status": "ok", "service": "rag-service"}
 
+@app.get("/health")
+def health_check():
+    return {"status": "OK", "service": "rag-service"}
+
 @app.post("/rag/query")
 def rag_query(payload: RagQuery):
     # Placeholder: integrate LangChain / OpenAI / Pinecone here
