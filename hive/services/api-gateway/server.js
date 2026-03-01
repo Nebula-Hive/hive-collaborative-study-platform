@@ -15,6 +15,7 @@ app.use(helmet());
 app.use(express.json());
 
 app.get('/', (req, res) => res.json({ status: 'ok', service: 'api-gateway' }));
+app.get('/health', (req, res) => res.json({ status: 'OK', service: 'api-gateway' }));
 
 app.listen(PORT, () => {
   console.log('api-gateway listening on port', PORT);
