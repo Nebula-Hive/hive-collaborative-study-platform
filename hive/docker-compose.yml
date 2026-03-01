@@ -7,6 +7,12 @@ services:
       - "27017:27017"
     volumes:
       - mongo-data:/data/db
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
 
   api-gateway:
     build: ./services/api-gateway
@@ -16,8 +22,15 @@ services:
     ports:
       - "4000:4000"
     depends_on:
-      - mongo
+      mongo:
+        condition: service_healthy
     restart: on-failure
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
   auth-service:
     build: ./services/auth-service
@@ -27,8 +40,15 @@ services:
     ports:
       - "3000:3000"
     depends_on:
-      - mongo
+      mongo:
+        condition: service_healthy
     restart: on-failure
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
   user-service:
     build: ./services/user-service
@@ -38,8 +58,15 @@ services:
     ports:
       - "3001:3001"
     depends_on:
-      - mongo
+      mongo:
+        condition: service_healthy
     restart: on-failure
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
   resource-service:
     build: ./services/resource-service
@@ -49,8 +76,15 @@ services:
     ports:
       - "3002:3002"
     depends_on:
-      - mongo
+      mongo:
+        condition: service_healthy
     restart: on-failure
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3002/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
   chat-service:
     build: ./services/chat-service
@@ -60,8 +94,15 @@ services:
     ports:
       - "3003:3003"
     depends_on:
-      - mongo
+      mongo:
+        condition: service_healthy
     restart: on-failure
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3003/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
   note-service:
     build: ./services/note-service
@@ -71,8 +112,15 @@ services:
     ports:
       - "3004:3004"
     depends_on:
-      - mongo
+      mongo:
+        condition: service_healthy
     restart: on-failure
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3004/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
   progress-service:
     build: ./services/progress-service
@@ -82,8 +130,15 @@ services:
     ports:
       - "3005:3005"
     depends_on:
-      - mongo
+      mongo:
+        condition: service_healthy
     restart: on-failure
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3005/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
   session-service:
     build: ./services/session-service
@@ -93,8 +148,15 @@ services:
     ports:
       - "3006:3006"
     depends_on:
-      - mongo
+      mongo:
+        condition: service_healthy
     restart: on-failure
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3006/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
   rag-service:
     build: ./services/rag-service
@@ -104,6 +166,12 @@ services:
     ports:
       - "8000:8000"
     restart: on-failure
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
   frontend:
     build: ./frontend
@@ -113,6 +181,12 @@ services:
     ports:
       - "5173:5173"
     restart: on-failure
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5173"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
 volumes:
   mongo-data:
