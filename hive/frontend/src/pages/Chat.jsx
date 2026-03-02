@@ -1,258 +1,167 @@
-// src/pages/Chat.jsx
-import React, { useState, useEffect, useRef } from 'react';
-import io from 'socket.io-client';
+import React, { useState, useEffect, useRef } from "react";
+import io from "socket.io-client";
 
-const SERVER_URL = 'http://localhost:3003';
+const SERVER_URL = "http://localhost:3003";
 
-const Chat = () => {
+export default function Chat() {
   const [socket, setSocket] = useState(null);
-  const [room, setRoom] = useState('general');
-  const [username, setUsername] = useState(`user${Math.floor(Math.random() * 1000)}`);
-  const [message, setMessage] = useState('');
+  const [studentId, setStudentId] = useState("");
+  const [batch, setBatch] = useState("");
+  const [message, setMessage] = useState("");
   const [messages, setMessages] = useState([]);
-  const [connected, setConnected] = useState(false);
   const [joined, setJoined] = useState(false);
 
   const messagesEndRef = useRef(null);
 
-  // auto scroll to bottom
+  // Auto-scroll
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // socket connection
   useEffect(() => {
     const newSocket = io(SERVER_URL);
 
-    newSocket.on('connect', () => {
-      setConnected(true);
-      console.log('Connected');
+    newSocket.on("receiveMessage", (data) => {
+
+      if (!data.system) data.system = false;
+      setMessages((prev) => [...prev, data]);
     });
 
-    newSocket.on('notification', (msg) => {
-      setMessages(prev => [...prev, { username: 'System', message: msg, time: new Date() }]);
-    });
+    newSocket.on("pastMessages", (pastMsgs) => {
 
-    newSocket.on('receiveMessage', (data) => {
-      setMessages(prev => [...prev, { ...data, time: new Date(data.time) }]);
-    });
-
-    newSocket.on('disconnect', () => {
-      setConnected(false);
-      setJoined(false);
+      const processed = pastMsgs.map((m) => ({
+        ...m,
+        system: m.username === "System" ? true : false,
+      }));
+      setMessages(processed);
     });
 
     setSocket(newSocket);
-
-    return () => {
-      newSocket.disconnect();
-    };
+    return () => newSocket.disconnect();
   }, []);
 
+  const getBatchFromId = (id) => id.split("/")[1];
+
   const joinRoom = () => {
-    if (!socket || !room.trim() || !username.trim()) return;
+    if (!studentId.trim()) return;
+    const detectedBatch = getBatchFromId(studentId.trim());
+    setBatch(detectedBatch);
 
-    socket.emit('joinGroup', {
-      room: room.trim(),
-      username: username.trim()
+    socket.emit("joinGroup", {
+      room: detectedBatch,
+      username: studentId.trim(),
     });
-
     setJoined(true);
-    fetchHistory();
   };
 
   const sendMessage = (e) => {
     e.preventDefault();
-    if (!socket || !message.trim() || !joined) return;
+    if (!message.trim()) return;
 
-    socket.emit('sendMessage', {
-      room: room.trim(),
-      username: username.trim(),
-      message: message.trim()
+    socket.emit("sendMessage", {
+      room: batch,
+      username: studentId,
+      message,
     });
-
-    setMessage('');
+    setMessage("");
   };
 
-  const fetchHistory = async () => {
-    try {
-      const res = await fetch(`${SERVER_URL}/api/messages/${encodeURIComponent(room.trim())}`);
-      if (!res.ok) throw new Error();
-      const history = await res.json();
-      setMessages(history.map(m => ({
-        username: m.username,
-        message: m.message,
-        time: new Date(m.time)
-      })));
-    } catch (err) {
-      console.log('History failed');
-    }
+  const leaveRoom = () => {
+    if (!socket) return;
+
+    socket.emit("leaveGroup"); 
+    setJoined(false);
+    setBatch("");
   };
+
+
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      if (joined && socket) socket.emit("leaveGroup");
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [joined, socket]);
 
   return (
-    <div style={{
-      maxWidth: '700px',
-      margin: '20px auto',
-      fontFamily: 'system-ui, sans-serif',
-      padding: '0 16px'
-    }}>
-
-      <h2 style={{ textAlign: 'center', marginBottom: '24px' }}>
-        Simple Group Chat
-      </h2>
+    <div className="max-w-2xl mx-auto mt-10 p-4 font-sans">
+      <h2 className="text-2xl font-bold text-center mb-6">Batch Group Chat</h2>
 
       {!joined ? (
-        <div style={{
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '12px',
-          maxWidth: '400px',
-          margin: '0 auto'
-        }}>
+        <div className="flex flex-col gap-4">
           <input
             type="text"
-            placeholder="Room name"
-            value={room}
-            onChange={e => setRoom(e.target.value)}
-            style={{
-              padding: '10px',
-              fontSize: '16px',
-              border: '1px solid #ccc',
-              borderRadius: '4px'
-            }}
+            placeholder="Enter Student ID (SE/2022/013)"
+            value={studentId}
+            onChange={(e) => setStudentId(e.target.value)}
+            className="p-3 border rounded-lg"
           />
-
-          <input
-            type="text"
-            placeholder="Your name"
-            value={username}
-            onChange={e => setUsername(e.target.value)}
-            style={{
-              padding: '10px',
-              fontSize: '16px',
-              border: '1px solid #ccc',
-              borderRadius: '4px'
-            }}
-          />
-
           <button
             onClick={joinRoom}
-            disabled={!room.trim() || !username.trim()}
-            style={{
-              padding: '12px',
-              fontSize: '16px',
-              backgroundColor: '#0066cc',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer'
-            }}
+            className="bg-blue-600 text-white p-3 rounded-lg hover:bg-blue-700"
           >
-            Join
+            Join Your Batch
           </button>
         </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-
-          <div style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            fontSize: '14px',
-            color: '#555'
-          }}>
+        <div className="flex flex-col gap-4">
+          <div className="flex justify-between text-sm text-gray-600">
             <div>
-              Room: <strong>{room}</strong> • You: <strong>{username}</strong>
+              Batch: <b>{batch}</b> | Student: <b>{studentId}</b>
             </div>
             <button
-              onClick={() => socket?.disconnect()}
-              style={{
-                padding: '6px 12px',
-                backgroundColor: '#cc0000',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer'
-              }}
+              onClick={leaveRoom}
+              className="bg-red-500 text-white px-3 py-1 rounded"
             >
               Leave
             </button>
           </div>
 
-          <div style={{
-            border: '1px solid #ddd',
-            borderRadius: '8px',
-            height: '400px',
-            overflowY: 'auto',
-            padding: '16px',
-            backgroundColor: '#fafafa'
-          }}>
+        
+          <div className="border rounded-lg h-96 overflow-y-auto p-4 bg-gray-50">
             {messages.map((msg, i) => (
               <div
                 key={i}
-                style={{
-                  marginBottom: '12px',
-                  textAlign: msg.username === username ? 'right' : 'left'
-                }}
+                className={`mb-2 ${
+                  msg.system
+                    ? "text-center text-gray-400 italic"
+                    : msg.username === studentId
+                    ? "text-right"
+                    : "text-left"
+                }`}
               >
-                <strong style={{
-                  color: msg.username === 'System' ? '#888' :
-                         msg.username === username ? '#0066cc' : '#333'
-                }}>
-                  {msg.username}:
-                </strong>{' '}
-                {msg.message}
-                <small style={{ color: '#999', marginLeft: '8px' }}>
-                  {msg.time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                </small>
+                {msg.system ? (
+                  <span>{msg.message}</span>
+                ) : (
+                  <>
+                    <span
+                      className={`font-semibold ${
+                        msg.username === studentId ? "text-blue-600" : "text-gray-800"
+                      }`}
+                    >
+                      {msg.username === studentId ? "You" : msg.username}:
+                    </span>{" "}
+                    {msg.message}
+                  </>
+                )}
               </div>
             ))}
             <div ref={messagesEndRef} />
           </div>
 
-          <form onSubmit={sendMessage} style={{ display: 'flex', gap: '8px' }}>
+          
+          <form onSubmit={sendMessage} className="flex gap-2">
             <input
               type="text"
+              placeholder="Type message..."
               value={message}
-              onChange={e => setMessage(e.target.value)}
-              placeholder="Type a message..."
-              style={{
-                flex: 1,
-                padding: '12px',
-                fontSize: '16px',
-                border: '1px solid #ccc',
-                borderRadius: '4px'
-              }}
+              onChange={(e) => setMessage(e.target.value)}
+              className="flex-1 border p-3 rounded-lg"
             />
-            <button
-              type="submit"
-              disabled={!message.trim()}
-              style={{
-                padding: '0 24px',
-                backgroundColor: '#0066cc',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer'
-              }}
-            >
-              Send
-            </button>
+            <button className="bg-blue-600 text-white px-6 rounded-lg">Send</button>
           </form>
-        </div>
-      )}
-
-      {!connected && joined && (
-        <div style={{
-          color: '#c00',
-          textAlign: 'center',
-          marginTop: '16px'
-        }}>
-          Disconnected — trying to reconnect...
         </div>
       )}
     </div>
   );
-};
-
-export default Chat;
+}

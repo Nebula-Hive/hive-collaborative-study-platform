@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 
 const messageSchema = new mongoose.Schema({
-  groupId: String,
+  room: String,
   username: String,
   message: String,
   time: { type: Date, default: Date.now },

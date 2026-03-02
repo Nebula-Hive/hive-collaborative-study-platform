@@ -1,17 +1,13 @@
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
-const dotenv = require('dotenv');
 const http = require('http');
 const { Server } = require('socket.io');
 const connectDB = require('./src/config/db');
 const Message = require('./src/models/messageModal');
 const messageRoutes = require('./src/routes/messageRoutes');
 
-dotenv.config();
-const PORT = process.env.PORT || 3003;
-
-connectDB(process.env.MONGO_URI || 'mongodb://localhost:27017/hive');
+connectDB('mongodb://localhost:27017/hive');
 
 const app = express();
 app.use(cors());
@@ -19,32 +15,81 @@ app.use(helmet());
 app.use(express.json());
 app.use('/api/messages', messageRoutes);
 
-app.get('/', (req, res) => res.json({ status: 'ok', service: 'chat-service' }));
-app.get('/health', (req, res) => res.json({ status: 'OK', service: 'chat-service' }));
-
 const server = http.createServer(app);
-const io = new Server(server, {
-  cors: { origin: '*' }
-});
-const usersInRoom = {};
+const io = new Server(server, { cors: { origin: '*' } });
+
+// Track socket -> user & room
+const socketUserMap = {};
 
 io.on('connection', (socket) => {
   console.log('Socket connected:', socket.id);
 
-  socket.on('joinGroup', ({ room, username }) => {
+  // Join room
+  socket.on('joinGroup', async ({ room, username }) => {
     socket.join(room);
-    if (!usersInRoom[room]) usersInRoom[room] = [];
-    usersInRoom[room].push(username);
-    io.to(room).emit('notification', `${username} joined the group`);
+    socketUserMap[socket.id] = { room, username };
+
+    // Send past messages
+    const pastMessages = await Message.find({ room }).sort({ time: 1 });
+    socket.emit('pastMessages', pastMessages);
+
+    // Notify batch
+    const systemMsg = {
+      username: 'System',
+      message: `${username} joined batch ${room}`,
+      time: new Date(),
+      system: true,
+    };
+    io.to(room).emit('receiveMessage', systemMsg);
+    await Message.create({ room, username: 'System', message: systemMsg.message });
   });
 
+  // Send chat message
   socket.on('sendMessage', async ({ room, username, message }) => {
     const msgData = { room, username, message, time: new Date() };
-    try { await Message.create(msgData); } catch (err) { console.error(err); }
+    await Message.create(msgData);
     io.to(room).emit('receiveMessage', msgData);
   });
 
-  socket.on('disconnect', () => console.log('Socket disconnected:', socket.id));
+  // Leave room manually
+  socket.on('leaveGroup', async () => {
+    const user = socketUserMap[socket.id];
+    if (user) {
+      const { room, username } = user;
+
+      const systemMsg = {
+        username: 'System',
+        message: `${username} left batch ${room}`,
+        time: new Date(),
+        system: true,
+      };
+      io.to(room).emit('receiveMessage', systemMsg);
+      await Message.create({ room, username: 'System', message: systemMsg.message });
+
+      socket.leave(room);
+      delete socketUserMap[socket.id];
+    }
+  });
+
+  // Handle disconnect
+  socket.on('disconnect', async () => {
+    const user = socketUserMap[socket.id];
+    if (user) {
+      const { room, username } = user;
+
+      const systemMsg = {
+        username: 'System',
+        message: `${username} disconnected from batch ${room}`,
+        time: new Date(),
+        system: true,
+      };
+      io.to(room).emit('receiveMessage', systemMsg);
+      await Message.create({ room, username: 'System', message: systemMsg.message });
+
+      delete socketUserMap[socket.id];
+    }
+    console.log('Socket disconnected:', socket.id);
+  });
 });
 
-server.listen(PORT, () => console.log(`chat-service listening on ${PORT}`));
+server.listen(3003, () => console.log('Server running on port 3003'));

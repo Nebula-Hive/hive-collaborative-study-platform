@@ -1,7 +1,16 @@
 const express = require('express');
 const router = express.Router();
-const { getMessagesByGroup } = require('../controllers/messageController');
+const Message = require('../models/messageModal');
 
-router.get('/:groupId', getMessagesByGroup);
+// Get all past messages for a room
+router.get('/:room', async (req, res) => {
+  const { room } = req.params;
+  try {
+    const messages = await Message.find({ room }).sort({ time: 1 });
+    res.json(messages);
+  } catch (err) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
 
 module.exports = router;
