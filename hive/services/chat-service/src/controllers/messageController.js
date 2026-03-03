@@ -20,4 +20,6 @@ const getMessagesByGroup = async (req, res) => {
   }
 };
 
-module.exports = { getMessagesByGroup };
+module.exports = {
+   getMessagesByGroup 
+  };
