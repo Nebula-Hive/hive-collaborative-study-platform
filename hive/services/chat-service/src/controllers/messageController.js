@@ -2,7 +2,7 @@ const Message = require('../models/messageModel');
 const Student = require('../models/studentModel');
 
 
-exports.getMessagesByGroup = async (req, res) => {
+const getMessagesByGroup = async (req, res) => {
   const { groupId, studentId } = req.params;
 
   try {
@@ -19,3 +19,5 @@ exports.getMessagesByGroup = async (req, res) => {
     res.status(500).json({ error: 'Server error' });
   }
 };
+
+module.exports = { getMessagesByGroup };
