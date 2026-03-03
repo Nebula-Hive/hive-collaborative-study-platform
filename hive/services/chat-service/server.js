@@ -2,17 +2,26 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const http = require('http');
+const dotenv = require('dotenv');
 const { Server } = require('socket.io');
 const connectDB = require('./src/config/db');
-const Message = require('./src/models/messageModal');
+const Message = require('./src/models/messageModel');
 const messageRoutes = require('./src/routes/messageRoutes');
 
-connectDB('mongodb://localhost:27017/hive');
+dotenv.config();
+const PORT = process.env.PORT || 3003;
+
+connectDB(process.env.MONGO_URI || 'mongodb://localhost:27017/hive');
+
 
 const app = express();
 app.use(cors());
 app.use(helmet());
 app.use(express.json());
+
+app.get('/', (req, res) => res.json({ status: 'ok', service: 'chat-service' }));
+app.get('/health', (req, res) => res.json({ status: 'OK', service: 'chat-service' }));
+
 app.use('/api/messages', messageRoutes);
 
 const server = http.createServer(app);
@@ -92,4 +101,4 @@ io.on('connection', (socket) => {
   });
 });
 
-server.listen(3003, () => console.log('Server running on port 3003'));
+server.listen(PORT, () => console.log(`chat-service listening on ${PORT}`));

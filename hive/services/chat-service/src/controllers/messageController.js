@@ -1,5 +1,6 @@
-const Message = require('../models/messageModal');
-const Student = require('../models/studentModal');
+const Message = require('../models/messageModel');
+const Student = require('../models/studentModel');
+
 
 exports.getMessagesByGroup = async (req, res) => {
   const { groupId, studentId } = req.params;

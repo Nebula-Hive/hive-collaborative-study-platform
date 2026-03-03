@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const Message = require('../models/messageModal');
+const Message = require('../models/messageModel');
 
 // Get all past messages for a room
 router.get('/:room', async (req, res) => {
