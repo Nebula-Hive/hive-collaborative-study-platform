@@ -63,40 +63,29 @@ const AppSidebar = () => {
   const location = useLocation();
   const [openSubmenu, setOpenSubmenu] = useState(null);
   const { authData } = useAuth();
-  
+
   authData.role = "ADMIN"; // For testing purposes, set role to ADMIN
 
   return (
     <aside
-      className={`fixed top-0 left-0 h-screen bg-white   text-gray-900 transition-all border duration-300 ease-in-out  border-gray-200 z-50
+      className={`fixed top-0 left-0 h-screen bg-white text-secondary-500 transition-all border duration-300 ease-in-out border-gray-200 z-50
         ${isExpanded || isMobileOpen ? "w-[290px]" : "w-[90px]"}
         ${isMobileOpen ? "translate-x-0" : "-translate-x-full"}
         lg:translate-x-0`}
     >
-      <div className="flex items-center justify-between py-4 px-5  border-b-black">
+      <div className="flex items-center justify-between justify-center py-4 px-5">
         <Link to="/">
           {isExpanded || isMobileOpen ? (
             <>
-              <img
-                className=""
-                src="https://www.getcleveri.com/wp-content/uploads/2023/09/logo-dark.png"
-                alt="Logo"
-                width={150}
-                height={40}
-              />
+              <img src="/logo.png" alt="Hive Logo" width={80} height={32} />
             </>
           ) : (
-            <img
-              src="https://media.licdn.com/dms/image/v2/D4D0BAQG_iWsjky76hg/company-logo_200_200/company-logo_200_200/0/1710821661207/get_cleveri_logo?e=2147483647&v=beta&t=DcDCNGlpOCZxnBsfdXYqIaPtgjSrPeiMyKY5udpQHpw"
-              alt="Logo"
-              width={40}
-              height={40}
-            />
+            <img src="/logo-collapsed.png" alt="Hive Logo" width={32} height={32} />
           )}
         </Link>
         <button
           onClick={toggleSidebar}
-          className="text-gray-500 dark:text-gray-400 lg:hidden"
+          className="text-secondary-400 lg:hidden"
         >
           {isExpanded ? (
             <Icon icon={`heroicons-outline:x-mark`} className={`w-6 h-6`} />
@@ -116,10 +105,10 @@ const AppSidebar = () => {
                   // Submenu Button
                   <button
                     onClick={() => handleSubmenuToggle(index)}
-                    className={`flex items-center w-full px-4 py-3 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition
-            ${openSubmenu === index ? "bg-blue-200 dark:bg-gray-800" : ""}`}
+                    className={`flex items-center w-full px-4 py-3 rounded-md hover:bg-primary-100 transition
+            ${!isExpanded ? "justify-center" : ""}
+            ${openSubmenu === index ? "bg-primary-100 text-primary-800" : ""}`}
                   >
-                    {/* {item.icon} */}
                     <Icon
                       icon={`heroicons-outline:${item.icon}`}
                       className={`w-6 h-6`}
@@ -128,31 +117,23 @@ const AppSidebar = () => {
                     {isExpanded && (
                       <Icon
                         icon={`heroicons-outline:chevron-down`}
-                        className={`w-6 h-6 ml-auto transition-transform ${
-                          openSubmenu === index ? "rotate-180" : ""
-                        }`}
+                        className={`w-6 h-6 ml-auto transition-transform ${openSubmenu === index ? "rotate-180" : ""
+                          }`}
                       />
-                      // <ChevronDown
-                      //   size={16}
-                      //   className={`ml-auto transition-transform ${
-                      //     openSubmenu === index ? "rotate-180" : ""
-                      //   }`}
-                      // />
                     )}
                   </button>
                 ) : (
                   // Normal Navigation Link
                   <Link
                     to={item.path}
-                    className={`flex items-center px-4 py-3 rounded-md bg-blue-100 hover:bg-blue-300 transition ${
-                      location.pathname === item.path
-                        ? "bg-blue-200 font-semibold text-blue-700"
-                        : ""
-                    }`}
+                    className={`flex items-center px-4 py-3 rounded-md hover:bg-primary-100 transition ${!isExpanded ? "justify-center" : ""} ${location.pathname === item.path
+                      ? "bg-primary-300 font-semibold text-primary-900"
+                      : "bg-primary-50"
+                      }`}
                   >
                     <Icon
                       icon={`heroicons-outline:${item.icon}`}
-                      className={`w-6 h-6`}
+                      className={`w-6 h-6 `}
                     />
                     {isExpanded && <span className="ml-3">{item.name}</span>}
                   </Link>
