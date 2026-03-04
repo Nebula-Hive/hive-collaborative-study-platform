@@ -103,12 +103,44 @@ const getSessionById =async (req,res)=>{
     });
     }
 } 
+// Admin-only functions
+const createSession = async (req, res) => {
+  try {
+    const { type, topic, description, date, time } = req.body;
+    const session = await StudySession.create({ type, topic, description, date, time });
+    res.status(201).json(session);
+  } catch (error) {
+    res.status(500).json({ message: "Server Error", error: error.message });
+  }
+};
 
+const updateSession = async (req, res) => {
+  try {
+    const session = await StudySession.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    if (!session) return res.status(404).json({ message: "Session not found" });
+    res.status(200).json(session);
+  } catch (error) {
+    res.status(500).json({ message: "Server Error", error: error.message });
+  }
+};
+
+const deleteSession = async (req, res) => {
+  try {
+    const session = await StudySession.findByIdAndDelete(req.params.id);
+    if (!session) return res.status(404).json({ message: "Session not found" });
+    res.status(200).json({ message: "Session deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ message: "Server Error", error: error.message });
+  }
+};
 
  module.exports = {
    getAllSessions ,
    getSessionById,
    getCurrentMonthSessions,
   getNextMonthSessions,
-  getSessionsByMonth
+  getSessionsByMonth,
+  createSession,
+  updateSession,
+  deleteSession
   };
