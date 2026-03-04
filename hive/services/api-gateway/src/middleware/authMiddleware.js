@@ -16,19 +16,49 @@ if (!admin.apps.length) {
   });
 }
 
+// Public routes that skip JWT verification
+const PUBLIC_ROUTES = [
+  { method: 'GET',  path: '/health' },
+  { method: 'GET',  path: '/' },
+  { method: 'POST', path: '/auth/login' },
+  { method: 'POST', path: '/auth/register' },
+];
+
+const isPublicRoute = (method, path) =>
+  PUBLIC_ROUTES.some(
+    (r) => r.method === method && path.startsWith(r.path)
+  );
+
 const authMiddleware = async (req, res, next) => {
-  const authHeader = req.headers.authorization;
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({ message: 'No token provided' });
+  // Skip auth for public routes
+  if (isPublicRoute(req.method, req.path)) {
+    return next();
   }
-  const idToken = authHeader.split('Bearer ')[1];
+
+  const authHeader = req.headers.authorization;
+
+  // No token at all → 401 Unauthorized
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ message: 'Unauthorized: no token provided' });
+  }
+
+  const idToken = authHeader.split('Bearer ')[1].trim();
+
   try {
     const decoded = await admin.auth().verifyIdToken(idToken);
-    req.user = decoded;
+
+    // Attach normalized user object to request
+    req.user = {
+      uid:   decoded.uid,
+      email: decoded.email || null,
+      role:  decoded.role || (decoded.customClaims && decoded.customClaims.role) || 'student',
+    };
+
     next();
   } catch (err) {
-    console.error('Firebase token verification failed', err);
-    return res.status(401).json({ message: 'Unauthorized' });
+    console.error('[AuthMiddleware] Token verification failed:', err.message);
+    // Bad / expired token → 403 Forbidden
+    return res.status(403).json({ message: 'Forbidden: invalid or expired token' });
   }
 };
 
