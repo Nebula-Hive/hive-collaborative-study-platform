@@ -106,23 +106,44 @@ const createUser = async (req, res) => {
 // DELETE soft delete user
 const deleteUser = async (req, res) => {
   try {
-    const { studentNumber } = req.params;
-    const user = await User.findOne({ studentNumber });
-    if (!user) return res.status(404).json({ message: 'User not found' });
-
-    // Only admins/superadmins can delete
-    if (req.user.role !== 'superadmin' && req.user.role !== 'admin') {
-      return res.status(403).json({ message: 'Forbidden' });
+    if (!["superadmin", "admin"].includes(req.user.role)) {
+      return res.status(403).json({ message: "Forbidden" });
     }
 
+    const { studentNumber } = req.params;
+
+    // Find user first
+    const user = await User.findOne({ studentNumber, role: "student" });
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Soft delete in MongoDB
     user.isActive = false;
     await user.save();
-    return res.json({ message: 'User soft-deleted', studentNumber });
+
+    // Disable Firebase account
+    if (user.firebaseUid) {
+      await admin.auth().updateUser(user.firebaseUid, {
+        disabled: true,
+      });
+
+      // Force logout
+      await admin.auth().revokeRefreshTokens(user.firebaseUid);
+    }
+
+    return res.json({
+      message: "User deactivated successfully",
+      studentNumber: user.studentNumber,
+    });
+
   } catch (err) {
-    console.error('deleteUser error', err);
-    return res.status(500).json({ message: 'Server error' });
+    console.error("deleteUser error", err);
+    return res.status(500).json({ message: "Server error" });
   }
 };
+
 
 // GET all admins (superadmin only)
 const getAllAdmins = async (req, res) => {
@@ -151,8 +172,8 @@ const createAdmin = async (req, res) => {
     const user = new User({
       name,
       email,
-      password: password || undefined,
-      studentNumber: studentNumber || undefined,
+      password: password,
+      studentNumber: studentNumber,
       role: 'admin',
       firebaseUid: firebaseUser.uid,
     });
@@ -161,26 +182,53 @@ const createAdmin = async (req, res) => {
     return res.status(201).json(user);
   } catch (err) {
     console.error('createAdmin error', err);
+
     if (err.code === 11000) return res.status(400).json({ message: 'Duplicate field', error: err.keyValue });
+    if (err.code === "auth/email-already-exists") {
+      return res.status(400).json({
+        message: "Email already registered",
+      });
+    }
     return res.status(500).json({ message: 'Server error' });
   }
 };
 
-// DELETE admin (soft delete) - superadmin only
+// DELETE soft delete admin (superadmin only)
 const deleteAdmin = async (req, res) => {
   try {
-    const { id } = req.params;
-    const user = await User.findById(id);
-    if (!user) return res.status(404).json({ message: 'Admin not found' });
+    if (req.user.role !== "superadmin") {
+      return res.status(403).json({ message: "Forbidden" });
+    }
 
-    if (user.role !== 'admin') return res.status(400).json({ message: 'User is not an admin' });
+    const { studentNumber } = req.params;
 
-    user.isActive = false;
-    await user.save();
-    return res.json({ message: 'Admin soft-deleted', id });
+    const adminUser = await User.findOne({ studentNumber, role: "admin" });
+
+    if (!adminUser) {
+      return res.status(404).json({ message: "Admin not found" });
+    }
+
+    // Soft delete in MongoDB
+    adminUser.isActive = false;
+    await adminUser.save();
+
+    // Disable Firebase account
+    if (adminUser.firebaseUid) {
+      await admin.auth().updateUser(adminUser.firebaseUid, {
+        disabled: true,
+      });
+
+      await admin.auth().revokeRefreshTokens(adminUser.firebaseUid);
+    }
+
+    return res.json({
+      message: "Admin deactivated successfully",
+      studentNumber: adminUser.studentNumber,
+    });
+
   } catch (err) {
-    console.error('deleteAdmin error', err);
-    return res.status(500).json({ message: 'Server error' });
+    console.error("deleteAdmin error", err);
+    return res.status(500).json({ message: "Server error" });
   }
 };
 
