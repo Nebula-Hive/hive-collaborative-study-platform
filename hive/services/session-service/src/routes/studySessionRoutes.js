@@ -11,7 +11,7 @@ const {
   deleteSession
 } = require("../controllers/studySessionController");
 const authMiddleware = require("../middleware/authMiddleware");
-const requireRole = require("../middleware/roleMiddleware");
+const {requireRole} = require("../middleware/roleMiddleware");
 
 // Public routes
 router.get("/", getAllSessions);
