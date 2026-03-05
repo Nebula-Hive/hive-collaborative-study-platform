@@ -84,10 +84,3 @@ export const logoutSession = async (idToken) => {
   return response.data;
 };
 
-const api = {
-  registerUser,
-  verifyToken,
-  logoutSession,
-};
-
-export default api;
