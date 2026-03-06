@@ -20,7 +20,7 @@ export default function StudySessionCalendar() {
   }, []);
 
   useEffect(() => {
-    axios.get("http://localhost:3003/api/studysession/").then((res) => {
+    axios.get("http://localhost:3001/api/studysession/").then((res) => {
       const sessions = res.data;
       const calendarEvents = sessions.map((session) => {
         const utcDate = new Date(session.date); 
@@ -154,7 +154,7 @@ export default function StudySessionCalendar() {
         <div className="w-full lg:w-1/5 bg-white p-6 rounded-lg shadow">
           <h3 className="font-bold text-lg mb-5 text-gray-800">Upcoming Tasks</h3>
           <div className="space-y-4">
-            {tasks.slice(0, 6).map((task) => {
+            {tasks.slice(0, 5).map((task) => {
               // Convert UTC date → Colombo local date string
               const utc = new Date(task.date);
               const local = new Date(utc.getTime() + 5.5 * 60 * 60 * 1000);
