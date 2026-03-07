@@ -96,7 +96,7 @@ const AppSidebar = () => {
       </div>
 
       <nav className="mt-4 px-4">
-        <ul className="space-y-2">
+        <ul className="space-y-3">
           {navItems
             .filter((item) => item.allowed.includes(authData.role))
             .map((item, index) => (
