@@ -106,10 +106,45 @@ const getSessionById =async (req,res)=>{
 // Admin-only functions
 const createSession = async (req, res) => {
   try {
-    const { type, topic, description, date, time } = req.body;
-    const session = await StudySession.create({ type, topic, description, date, time });
+    const { subjectCode, type, topic, description, date, time } = req.body;
+
+    if (!subjectCode || !type || !topic || !description || !date || !time) {
+      return res.status(400).json({ message: "All fields are required." });
+    }
+
+    // Split time
+    const [timePart, modifier] = time.split(" "); 
+    let [hours, minutes] = timePart.split(".");  
+
+    hours = parseInt(hours);
+    minutes = parseInt(minutes);
+
+    // Convert to 24-hour format
+    if (modifier === "PM" && hours !== 12) hours += 12;
+    if (modifier === "AM" && hours === 12) hours = 0;
+
+    // Create Sri Lanka time
+    const sriLankaDate = new Date(Date.UTC(
+      parseInt(date.split("-")[0]),
+      parseInt(date.split("-")[1]) - 1,
+      parseInt(date.split("-")[2]),
+      hours - 5,       // remove 5 hours
+      minutes - 30     // remove 30 minutes
+    ));
+
+    const session = await StudySession.create({
+      subjectCode,
+      type,
+      topic,
+      description,
+      date: sriLankaDate,
+      time
+    });
+
     res.status(201).json(session);
+
   } catch (error) {
+    console.error("Create Session Error:", error);
     res.status(500).json({ message: "Server Error", error: error.message });
   }
 };

@@ -1,35 +1,22 @@
 const mongoose = require("mongoose");
 
 const studySessionSchema = new mongoose.Schema({
-  type: {
-    type: String,
-    required: true,
+  subjectCode: { type: String, required: true },
+  type: { type: String, required: true },
+  topic: { type: String, required: true },
+  description: { type: String, required: true },
 
-  },
-  topic: {
-    type: String,
-    required: true,
-  },
-  description: {
-    type: String,
-    required: true,
-  },
   date: {
     type: Date,
-    required: true,
-    validate: {
-      validator: (v) => v instanceof Date && !isNaN(v),
-      message: props => `${props.value} is not a valid date!`
-    }
+    required: true
   },
+
   time: {
     type: String,
-    required: true,
+    required: true
   },
-  createdAt: {
-    type: Date,
-    default: Date.now,
-  }
+
+  createdAt: { type: Date, default: Date.now }
 });
 
 module.exports = mongoose.model("StudySession", studySessionSchema);
