@@ -37,7 +37,7 @@ const AppHeader = () => {
   };
 
   return (
-    <header className="sticky top-0 flex w-full bg-white border-gray-200 z-999  lg:border-b">
+    <header className="sticky top-0 flex w-full bg-primary border-gray-200 z-999  lg:border-b">
       <div className="flex flex-col items-center justify-between grow lg:flex-row lg:px-6 py-3">
         <div className="flex items-center justify-between w-full gap-2 px-3 py-1 border-b border-gray-200 sm:gap-4 lg:justify-normal lg:border-b-0 lg:px-0 ">
           <button

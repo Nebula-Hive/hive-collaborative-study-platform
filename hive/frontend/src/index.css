@@ -1,10 +1,27 @@
 @import "tailwindcss";
+:root {
+  --primary-bg: #fffbeb; /* primary background color */
+  --secondary-bg: #fffbeb; /* primary background color */
+}
+.bg-primary {
+  background-color: var(--primary-bg);
+}
 
 /* Theme Tokens */
 @theme {
   /* Colors */
  /* Primary */
-  --color-primary-50: #F6F8FF;
+  --color-primary-50:  #fffdf6;  /* very light */
+  --color-primary-100: #fffbee;
+  --color-primary-200: #fff8d9;
+  --color-primary-300: #fff5c3;
+  --color-primary-400: #fff1ad;
+  --color-primary-500: #ffeda0;  /* main base */
+  --color-primary-600: #ffe680;
+  --color-primary-700: #ffdf60;
+  --color-primary-800: #ffd940;
+  --color-primary-900: #ffd120;  /* darkest */
+  /* --color-primary-50: #F6F8FF;
   --color-primary-100: #EDF0FF;
   --color-primary-200: #D1DAFE;
   --color-primary-300: #B4C2FD;
@@ -13,7 +30,7 @@
   --color-primary-600: #3F5EDF;
   --color-primary-700: #2A3F96;
   --color-primary-800: #203071;
-  --color-primary-900: #151F49;
+  --color-primary-900: #151F49; */
 
   /* Secondary */
   --color-secondary-50: #F9FAFB;

@@ -69,7 +69,7 @@ const resources = [
 
 export default function Resources() {
   return (
-    <div className="min-h-screen p-10 bg-gray-100">
+    <div className="min-h-screen p-10 bg-primary">
       <div className="flex flex-wrap gap-4 justify-center">
 
         {resources.map((item, index) => (

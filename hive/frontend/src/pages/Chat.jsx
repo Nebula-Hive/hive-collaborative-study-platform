@@ -67,9 +67,9 @@ export default function Chat() {
   };
 
   return (
-<div className="relative min-h-screen bg-[#fdfaf5] font-sans">
+<div className="relative min-h-screen bg-primary font-sans">
       {/* Fixed Header */}
-<header className="sticky top-17 bg-white/90 backdrop-blur-sm border-b border-amber-100 z-50">
+<header className="sticky top-17 bg-primary-200  backdrop-blur-sm border-b border-amber-100 z-50">
 <div className="w-full mx-auto flex items-center justify-between px-6 py-2">
     
     <div className="flex items-center gap-4">

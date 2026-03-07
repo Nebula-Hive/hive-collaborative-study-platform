@@ -6,7 +6,7 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import { FaDotCircle, FaBars, FaArrowLeft, FaArrowRight, FaHome } from "react-icons/fa";
 
-export default function StudySessionCalendar() {
+export default function StudySessionCalendar( { isUpcomingTasks = true } ) {
   const [events, setEvents] = useState([]);
   const [tasks, setTasks] = useState([]);
   const [calendarRef, setCalendarRef] = useState(null);
@@ -75,24 +75,32 @@ export default function StudySessionCalendar() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-primary">
       <div className="flex flex-col lg:flex-row gap-4 p-4">
         {/* Calendar Section */}
-        <div className="w-full lg:w-4/5 bg-white p-6 rounded-lg shadow relative">
-          <h2 className="text-2xl text-blue-700 font-bold mb-6">
+  <div
+    className={`w-full lg:rounded-lg  p-6 shadow ${
+      isUpcomingTasks ? "lg:w-4/5" : "lg:w-full"
+    } relative`}
+  >
+       {
+        isUpcomingTasks &&(
+             <h2 className="text-2xl text-gray-700 font-bold mb-6">
             Study Session Reminder
           </h2>
+        )
+       }
 
           {/* Mobile navigation */}
           {!isMdUp && (
             <div className="absolute top-4 left-4 flex gap-2 z-20">
-              <button className="p-2 bg-gray-200 rounded hover:bg-gray-300" onClick={() => handleNav("prev")}>
+              <button className="p-2 bg-primary-400 rounded hover:bg-primary-700" onClick={() => handleNav("prev")}>
                 <FaArrowLeft />
               </button>
-              <button className="p-2 bg-gray-200 rounded hover:bg-gray-300" onClick={() => handleNav("today")}>
+              <button className="p-2 bg-primary-400 rounded hover:bg-primary-700" onClick={() => handleNav("today")}>
                 <FaHome />
               </button>
-              <button className="p-2 bg-gray-200 rounded hover:bg-gray-300" onClick={() => handleNav("next")}>
+              <button className="p-2 bg-primary-400 rounded hover:bg-primary-700" onClick={() => handleNav("next")}>
                 <FaArrowRight />
               </button>
             </div>
@@ -102,13 +110,13 @@ export default function StudySessionCalendar() {
           {!isMdUp && (
             <div className="absolute top-4 right-4 z-20">
               <button
-                className="p-2 bg-gray-200 rounded hover:bg-gray-300"
+                className="p-2 bg-primary-400 rounded hover:bg-primary-700"
                 onClick={() => setShowViewMenu(!showViewMenu)}
               >
                 <FaBars />
               </button>
               {showViewMenu && (
-                <div className="absolute right-0 mt-2 bg-white border rounded shadow-lg flex flex-col min-w-[140px]">
+                <div className="absolute right-0 mt-2 border rounded shadow-lg flex flex-col min-w-[140px]">
                   {["dayGridMonth", "timeGridWeek", "timeGridDay", "listWeek"].map((view) => (
                     <button
                       key={view}
@@ -123,7 +131,7 @@ export default function StudySessionCalendar() {
             </div>
           )}
 
-          <div className="pt-10 md:pt-0">
+          <div className="pt-10 md:pt-0 ">
             <FullCalendar
               plugins={[dayGridPlugin, timeGridPlugin, listPlugin]}
               initialView="dayGridMonth"
@@ -139,7 +147,7 @@ export default function StudySessionCalendar() {
               ref={setCalendarRef}
               eventContent={(eventInfo) => (
                 <div
-                  className="text-[12px] px-1.5 py-0.5 truncate font-medium text-gray-900 hover:text-black rounded transition cursor-pointer flex items-center gap-1.5 "
+                  className="text-[12px] px-1.5 py-0.5 truncate font-medium text-gray-900 hover:text-black rounded transition cursor-pointer flex items-center gap-1.5 bg-pri "
                   title={`Time: ${eventInfo.event.extendedProps.time}\nType: ${eventInfo.event.extendedProps.type}\nTopic: ${eventInfo.event.extendedProps.topic}`}
                 >
                   {/* <FaDotCircle className="text-[6px] text-gray-800" /> */}
@@ -150,8 +158,10 @@ export default function StudySessionCalendar() {
           </div>
         </div>
 
-        {/* Upcoming Tasks Sidebar */}
-        <div className="w-full lg:w-1/5 bg-white p-6 rounded-lg shadow">
+        {
+          isUpcomingTasks && (
+                 
+        <div className="w-full lg:w-1/5  p-6 rounded-lg shadow">
           <h3 className="font-bold text-lg mb-5 text-gray-800">Upcoming Tasks</h3>
           <div className="space-y-4">
             {tasks.slice(0, 5).map((task) => {
@@ -183,6 +193,8 @@ export default function StudySessionCalendar() {
             )}
           </div>
         </div>
+          )
+        }
       </div>
     </div>
   );
