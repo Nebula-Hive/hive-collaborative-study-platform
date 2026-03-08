@@ -10,19 +10,21 @@ import Notification from "@/components/ui/Notification";
 import Textinput from "@/components/ui/Textinput";
 import Button from "@/components/ui/Button";
 
-const LoginValidationSchema = yup
+const SignupValidationSchema = yup
   .object({
+    name: yup.string().required("Name is Required"),
     email: yup
       .string()
       .email("Invalid email address")
       .required("email is Required"),
     password: yup.string().required("password is Required"),
+    studentNumber: yup.string().required("Student Number is Required"),
   })
   .required();
 
-function Login() {
+function Signup() {
   const [loading, setLoading] = useState(false);
-  const { login } = useAuth();
+  const { signup } = useAuth();
   const navigate = useNavigate();
 
   const {
@@ -30,26 +32,29 @@ function Login() {
     formState: { errors },
     handleSubmit,
   } = useForm({
-    resolver: yupResolver(LoginValidationSchema),
+    resolver: yupResolver(SignupValidationSchema),
     defaultValues: {
+      name: "",
       email: "",
       password: "",
+      studentNumber: "",
     },
   });
-
 
   const onSubmit = async (data) => {
     setLoading(true);
     try {
-      await login({
+      await signup({
+        name: data.name,
         email: data.email,
         password: data.password,
+        studentNumber: data.studentNumber,
       });
 
-      Notification.success("Login successful!");
+      Notification.success("Account created successfully!");
       navigate("/");
     } catch (error) {
-      Notification.error(error?.message || "Login failed!");
+      Notification.error(error?.message || "Signup failed!");
     } finally {
       setLoading(false);
     }
@@ -62,11 +67,21 @@ function Login() {
           <div className="mb-6 mt-4 text-center">
             <h1 className="text-2xl font-semibold text-gray-800 ">Welcome !</h1>
             <p className="text-sm text-gray-500 ">
-              Enter your credentials to a login panel.
+              Enter your credentials to sign up for an account.
             </p>
           </div>
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+            <div>
+              <Textinput
+                name="name"
+                label="Name"
+                type="text"
+                placeholder="Enter your name"
+                register={register}
+                error={errors.name}
+              />
+            </div>
             <div>
               <Textinput
                 name="email"
@@ -90,19 +105,29 @@ function Login() {
                 placeholder="Enter the password"
               />
             </div>
+            <div>
+              <Textinput
+                name="studentNumber"
+                label="Student Number"
+                type="text"
+                placeholder="Enter your student number"
+                register={register}
+                error={errors.studentNumber}
+              />
+            </div>
 
             <Button
               type="submit"
-              text="Login"
+              text="Sign Up"
               className="btn btn-primary block w-full text-center"
               isLoading={loading}
             />
           </form>
           <div className="mt-6 text-center">
             <p className="text-sm text-gray-500">
-              Don't have an account?{" "}
-              <Link to="/signup" className="text-blue-500 hover:underline">
-                Sign Up
+              Already have an account?{" "}
+              <Link to="/login" className="text-blue-500 hover:underline">
+                Log In
               </Link>
             </p>
           </div>
@@ -111,4 +136,4 @@ function Login() {
     </div>
   );
 }
-export default Login;
+export default Signup;
