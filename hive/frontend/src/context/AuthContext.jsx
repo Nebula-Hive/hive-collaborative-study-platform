@@ -112,6 +112,7 @@ export const AuthProvider = ({ children }) => {
       signup,
       login,
       logout,
+       token: localStorage.getItem(TOKEN_KEY),
     }),
     [user, role, loading]
   );

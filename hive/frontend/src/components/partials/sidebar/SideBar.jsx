@@ -64,7 +64,7 @@ const AppSidebar = () => {
 
   return (
     <aside
-      className={`fixed top-0 left-0 h-screen bg-white text-gray-900 transition-all border duration-300 ease-in-out border-gray-200 z-50
+      className={`fixed top-0 left-0 h-screen bg-primary text-gray-900 transition-all border duration-300 ease-in-out border-gray-200 z-50
         ${isExpanded || isMobileOpen ? "w-[290px]" : "w-[90px]"}
         ${isMobileOpen ? "translate-x-0" : "-translate-x-full"}
         lg:translate-x-0`}
@@ -105,9 +105,9 @@ const AppSidebar = () => {
               <li key={index}>
                 <Link
                   to={item.path}
-                  className={`flex items-center px-4 py-3 rounded-md bg-blue-100 hover:bg-blue-300 transition ${
+                  className={`flex items-center px-4 py-3 rounded-md bg-primary-300 hover:bg-primary-600 transition border shadow-xl${
                     location.pathname === item.path
-                      ? "bg-blue-200 font-semibold text-blue-700"
+                      ? "bg-blue-200 font-semibold "
                       : ""
                   }`}
                 >

@@ -8,7 +8,7 @@ const LayoutContent = () => {
   const { isExpanded, isHovered, isMobileOpen } = useSidebar();
 
   return (
-    <div className="min-h-screen xl:flex bg-slate-100">
+    <div className="min-h-screen xl:flex bg-primary">
       <div className="border">
         <AppSidebar />
       </div>
@@ -19,7 +19,7 @@ const LayoutContent = () => {
         } ${isMobileOpen ? "ml-0" : ""}`}
       >
         <AppHeader />
-        <div className="p-4 mx-auto max-w-(--breakpoint-2xl) md:p-6">
+        <div className="p-2 mx-auto max-w-(--breakpoint-2xl) md:p-2">
           <Outlet />
         </div>
       </div>
