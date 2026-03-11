@@ -210,7 +210,7 @@
   }
 
   .form-control[readonly] {
-    @apply bg-slate-200 text-slate-400 dark:bg-slate-600 cursor-pointer placeholder:text-slate-400;
+    @apply bg-slate-200 text-slate-400 cursor-pointer placeholder:text-slate-400 dark:bg-slate-600 cursor-pointer placeholder:text-slate-400;
   }
 
   .form-control[disabled] {
@@ -218,11 +218,11 @@
   }
 
   .form-control {
-    @apply pb-2 bg-white dark:bg-slate-900 transition duration-300 ease-in-out border border-slate-200 dark:border-slate-700 dark:text-slate-300 focus:ring-1 focus:ring-slate-600/90 dark:focus:ring-slate-900 focus:outline-none rounded placeholder:text-slate-400 text-slate-900 text-sm px-3 placeholder:font-normal dark:placeholder:text-slate-400 block w-full;
+    @apply pb-2 bg-white transition duration-300 ease-in-out border border-slate-200 focus:ring-1 focus:ring-slate-600/90 focus:outline-none rounded placeholder:text-slate-400 text-slate-900 text-sm px-3 placeholder:font-normal block w-full;
   }
 
   .form-label {
-    @apply mb-2 text-slate-600 dark:text-slate-300 text-sm leading-6 capitalize cursor-pointer block w-full font-medium rtl:text-right rtl:block;
+    @apply mb-2 text-slate-600 text-sm leading-6 capitalize cursor-pointer block w-full font-medium rtl:text-right rtl:block;
   }
 
   .badge {
@@ -254,11 +254,11 @@
   }
 
   .btn-dark {
-    @apply bg-slate-900 dark:bg-slate-900/70 text-white hover:ring-2 hover:ring-slate-900/80 hover:ring-offset-1 dark:hover:ring-0 dark:hover:ring-offset-0;
+    @apply bg-slate-900 text-white hover:ring-2 hover:ring-slate-900/80 hover:ring-offset-1 dark:hover:ring-offset-0;
   }
 
   .btn-primary {
-    @apply bg-primary-500 dark:bg-primary-500/70 text-white hover:ring-2 hover:ring-primary-500/80 hover:ring-offset-1 dark:hover:ring-0 dark:hover:ring-offset-0;
+    @apply bg-primary-500 text-white hover:ring-2 hover:ring-primary-500/80 hover:ring-offset-1;
   }
 
   .btn-secondary {
@@ -520,7 +520,7 @@
     @apply relative before:flex before:flex-col before:items-center before:justify-center before:w-[18px] before:h-[18px] before:m-[-0.7px] before:bg-slate-100 dark:before:bg-slate-500 before:absolute before:inset-0 before:rounded w-4 h-4 rounded checked:before:bg-slate-900 checked:before:content-[url("https://api.iconify.design/heroicons-outline/check.svg?color=white")] checked:before:leading-[10px] checked:before:ring-2 checked:before:ring-black-500 checked:before:ring-offset-2 checked:before:dark:ring-slate-700 checked:before:dark:ring-offset-0;
   }
 
-  /* InValid Select */
+  // InValid Select
   .hive-app {
     .react-select.is-invalid {
       .select__control {
@@ -663,7 +663,7 @@
     }
   }
 
-  /* Select Borderless */
+  /*Select Borderless*/
   .select-borderless {
     .select__control {
       border: 0;

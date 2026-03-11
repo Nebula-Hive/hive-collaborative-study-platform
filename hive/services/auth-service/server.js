@@ -18,7 +18,8 @@ app.use(express.json());
 
 app.get('/health', (req, res) => res.json({ status: 'OK', service: 'auth-service' }));
 
-app.use('/auth', authRoutes);
+// app.use('/auth', authRoutes);
+app.use('/', authRoutes);
 
 app.listen(PORT, () => {
   console.log('auth-service listening on port', PORT);

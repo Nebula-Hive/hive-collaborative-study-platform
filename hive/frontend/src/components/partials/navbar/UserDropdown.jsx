@@ -1,5 +1,7 @@
 import { React } from "react";
 import { useAuth } from "@/context/authContext";
+import { React } from "react";
+import { useAuth } from "@/context/AuthContext";
 
 import Dropdown from "@/components/ui/Dropdown";
 

@@ -1,60 +1,57 @@
 import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-
 import { useSidebar } from "@/context/sidebarContext";
-import { useAuth } from "@/context/authContext";
-
+import { useAuth } from "@/context/AuthContext";
 import Icon from "@/components/ui/Icon";
-
 
 const navItems = [
   {
     icon: "home",
     name: "Dashboard",
     path: "/",
-    allowed: ["ADMIN"],
+    allowed: ["student", "admin", "superAdmin"],
   },
   {
     icon: "chat-bubble-left-right",
     name: "Chat",
     path: "/chat",
-    allowed: ["ADMIN"],
+    allowed: ["student", "admin", "superAdmin"],
   },
   {
     icon: "folder-open",
     name: "Resources",
     path: "/resources",
-    allowed: ["ADMIN"],
+    allowed: ["student", "admin", "superAdmin"],
   },
   {
     icon: "sparkles",
     name: "AI Support",
     path: "/ai",
-    allowed: ["ADMIN"],
+    allowed: ["student", "admin", "superAdmin"],
   },
   {
     icon: "clock",
     name: "Study Session Reminders",
     path: "/session",
-    allowed: ["ADMIN"],
+    allowed: ["student", "admin", "superAdmin"],
   },
   {
     icon: "rectangle-stack",
     name: "Flashcard Creation",
     path: "/flashcards",
-    allowed: ["ADMIN"],
+    allowed: ["student", "admin", "superAdmin"],
   },
   {
     icon: "chart-bar",
     name: "Progress Tracking",
     path: "/progress",
-    allowed: ["ADMIN"],
+    allowed: ["student", "admin", "superAdmin"],
   },
   {
     icon: "book-open",
     name: "Notes",
     path: "/notes",
-    allowed: ["ADMIN"],
+    allowed: ["student", "admin", "superAdmin"],
   },
 ];
 
@@ -65,6 +62,8 @@ const AppSidebar = () => {
   const { authData } = useAuth();
 
   authData.role = "ADMIN"; // For testing purposes, set role to ADMIN
+
+  const { role } = useAuth(); // ✅ from firebase context
 
   return (
     <aside
@@ -88,9 +87,9 @@ const AppSidebar = () => {
           className="text-secondary-400 lg:hidden"
         >
           {isExpanded ? (
-            <Icon icon={`heroicons-outline:x-mark`} className={`w-6 h-6`} />
+            <Icon icon="heroicons-outline:x-mark" className="w-6 h-6" />
           ) : (
-            <Icon icon={`heroicons-outline:bars-3`} className={`w-6 h-6`} />
+            <Icon icon="heroicons-outline:bars-3" className="w-6 h-6" />
           )}
         </button>
       </div>
@@ -98,7 +97,7 @@ const AppSidebar = () => {
       <nav className="mt-4 px-4">
         <ul className="space-y-3">
           {navItems
-            .filter((item) => item.allowed.includes(authData.role))
+            .filter((item) => item.allowed.includes(role)) // ✅
             .map((item, index) => (
               <li key={index}>
                 {item.subItems ? (
