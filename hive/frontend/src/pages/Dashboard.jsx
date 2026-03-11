@@ -1,4 +1,7 @@
-import React from "react";
+import StudySessionCalendar from "./StudySession";
+import { useEffect, useState } from "react";
+import axios from "axios";
+import { useAuth } from "../context/AuthContext";
 import { Calendar, momentLocalizer } from "react-big-calendar";
 import moment from "moment";
 import "react-big-calendar/lib/css/react-big-calendar.css";
@@ -64,6 +67,29 @@ const eventStyleGetter = () => ({
 export default function Dashboard() {
   const { authData } = useAuth();
   const displayName = authData?.name || "Student";
+
+  const [tasks, setTasks] = useState([]);
+  const { user } = useAuth();
+  useEffect(() => {
+    axios.get("http://localhost:3001/api/studysession/")
+      .then((res) => {
+        const sessions = res.data;
+        const todayColombo = new Date();
+        todayColombo.setHours(0, 0, 0, 0);
+
+        const futureTasks = sessions
+          .map((task) => {
+            const utc = new Date(task.date);
+            const local = new Date(utc.getTime() + 5.5 * 60 * 60 * 1000);
+            return { ...task, localDate: local };
+          })
+          .filter((task) => task.localDate >= todayColombo)
+          .sort((a, b) => a.localDate - b.localDate);
+
+        setTasks(futureTasks);
+      })
+      .catch((err) => console.error(err));
+  }, []);
 
   return (
     <div>
