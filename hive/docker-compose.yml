@@ -73,10 +73,16 @@ services:
     env_file: .env
     environment:
       - PORT=3002
+      - MONGO_URI=mongodb://mongo:27017/hive
+      - RAG_SERVICE_URL=http://rag-service:8000
+      # AWS credentials are read from .env via env_file above
+      # S3_BUCKET_NAME, AWS_REGION, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY
     ports:
       - "3002:3002"
     depends_on:
       mongo:
+        condition: service_healthy
+      rag-service:
         condition: service_healthy
     restart: on-failure
     healthcheck:
