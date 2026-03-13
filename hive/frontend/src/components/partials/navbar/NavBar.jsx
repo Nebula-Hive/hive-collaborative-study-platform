@@ -37,7 +37,7 @@ const AppHeader = () => {
   };
 
   return (
-    <header className="sticky top-0 flex w-full bg-white border-gray-200 z-999  lg:border-b">
+    <header className="sticky top-0 flex w-full bg-primary border-gray-200 z-999  lg:border-b">
       <div className="flex flex-col items-center justify-between grow lg:flex-row lg:px-6 py-3">
         <div className="flex items-center justify-between w-full gap-2 px-3 py-1 border-b border-gray-200 sm:gap-4 lg:justify-normal lg:border-b-0 lg:px-0 ">
           <button
@@ -79,7 +79,7 @@ const AppHeader = () => {
           </button>
           <h1 className="text-lg font-semibold flex items-center gap-2">
             {mainModule}
-            {subModule && subModule !== "New" && (
+            {(subModule && (subModule !== "New")) && (
               <>
                 <span className="font-semibold">/</span>
                 <span className="text-sm font-semibold">{subModule}</span>
@@ -90,7 +90,7 @@ const AppHeader = () => {
             <img
               className=""
               width={150}
-              src="https://www.getcleveri.com/wp-content/uploads/2023/09/logo-dark.png"
+              src="/logo-dark.png"
               alt="Logo"
             />
           </Link>
@@ -116,9 +116,8 @@ const AppHeader = () => {
           </button>
         </div>
         <div
-          className={`${
-            isApplicationMenuOpen ? "flex" : "hidden"
-          } justify-between items-center  w-full gap-10 px-5 py-0 lg:flex shadow-theme-md lg:justify-end lg:px-5 lg:shadow-none`}
+          className={`${isApplicationMenuOpen ? "flex" : "hidden"
+            } justify-between items-center  w-full gap-10 px-5 py-0 lg:flex shadow-theme-md lg:justify-end lg:px-5 lg:shadow-none`}
         >
           <>
           {role === "superadmin" && (
