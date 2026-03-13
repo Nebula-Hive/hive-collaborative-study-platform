@@ -66,11 +66,6 @@ const UserDropdown = ({ user }) => {
               icon: "heroicons-outline:cog-6-tooth",
             },
             {
-              label: "Support",
-              link: "/users/new",
-              icon: "heroicons-outline:information-circle",
-            },
-            {
               label: "Logout",
               link: "/login",
               icon: "heroicons-outline:login",
