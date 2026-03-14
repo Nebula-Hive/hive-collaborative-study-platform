@@ -105,7 +105,7 @@ const AppSidebar = () => {
   const [openSubmenu, setOpenSubmenu] = useState(null);
   const { authData } = useAuth();
 
-  authData.role = "ADMIN"; // For testing purposes, set role to ADMIN
+  // authData.role = "ADMIN"; // For testing purposes, set role to ADMIN
 
   const { role } = useAuth(); // ✅ from firebase context
 
