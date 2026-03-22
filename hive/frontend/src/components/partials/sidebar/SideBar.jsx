@@ -82,19 +82,19 @@ const navItems = [
   {
     icon: "users",
     name: "User Management",
-    path: "/admin/users",
+    path: "/superadmin/users",
     allowed: [ "superadmin"],
   },
   {
-    icon: "users",
+    icon: "shield-exclamation",
     name: "Admin Management",
-    path: "/admin/users",
+    path: "/superadmin/admins",
     allowed: [ "superadmin"],
   },
   {
     icon: "users",
     name: "Groups",
-    path: "/admin/users",
+    path: "/superadmin/groups",
     allowed: [ "superadmin"],
   },
 ];
@@ -108,6 +108,10 @@ const AppSidebar = () => {
   // authData.role = "ADMIN"; // For testing purposes, set role to ADMIN
 
   const { role } = useAuth(); // ✅ from firebase context
+
+  const handleSubmenuToggle = (index) => {
+    setOpenSubmenu(openSubmenu === index ? null : index);
+  };
 
   return (
     <aside
