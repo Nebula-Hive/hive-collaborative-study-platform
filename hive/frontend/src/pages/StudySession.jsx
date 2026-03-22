@@ -1,8 +1,11 @@
 import { useState, useEffect } from "react";
-import axios from "axios";
 import { Calendar, momentLocalizer } from "react-big-calendar";
 import moment from "moment";
 import "react-big-calendar/lib/css/react-big-calendar.css";
+import { getAllSessions, createSession } from "@/services";
+import { useAuth } from "@/context/AuthContext";
+import Modal from "@/components/ui/Modal";
+import { toast } from "react-toastify";
 
 const localizer = momentLocalizer(moment);
 
@@ -19,15 +22,24 @@ const eventStyleGetter = () => ({
 });
 
 export default function StudySessionCalendar({ isUpcomingTasks = true }) {
+  const { role } = useAuth();
   const [events, setEvents] = useState([]);
   const [tasks, setTasks] = useState([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [formData, setFormData] = useState({
+    subjectCode: "",
+    type: "Lecture",
+    topic: "",
+    date: "",
+    time: "",
+    description: "",
+    repeatType: "Does not repeat",
+    customRepeat: "",
+  });
 
-  useEffect(() => {
-    axios
-      .get("http://localhost:3001/api/studysession/")
-      .then((res) => {
-        const sessions = res.data;
-
+  const loadSessions = () => {
+    getAllSessions()
+      .then((sessions) => {
         const calendarEvents = sessions.map((session) => {
           const utcDate = new Date(session.date);
           const localSriLankaDate = new Date(
@@ -64,82 +76,76 @@ export default function StudySessionCalendar({ isUpcomingTasks = true }) {
       .catch((err) => {
         console.error("Failed to load study sessions:", err);
       });
+  };
+
+  useEffect(() => {
+    loadSessions();
   }, []);
+
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleCreateSession = async (e) => {
+    e.preventDefault();
+    try {
+      await createSession(formData);
+      toast.success("Study session created successfully");
+      setIsModalOpen(false);
+      setFormData({
+        subjectCode: "",
+        type: "Lecture",
+        topic: "",
+        date: "",
+        time: "",
+        description: "",
+        repeatType: "Does not repeat",
+        customRepeat: "",
+      });
+      loadSessions();
+    } catch (err) {
+      toast.error(err?.response?.data?.message || "Failed to create session");
+    }
+  };
 
   return (
     <div className="min-h-screen bg-primary">
       <div className="flex flex-col lg:flex-row gap-4 p-4">
         {/* Calendar Section */}
         <div
-          className={`w-full bg-white rounded-xl border border-gray-200 p-6 shadow-sm ${
-            isUpcomingTasks ? "lg:w-4/5" : "lg:w-full"
-          }`}
+          className={`w-full bg-white rounded-xl border border-gray-200 p-6 shadow-sm ${isUpcomingTasks ? "lg:w-4/5" : "lg:w-full"
+            }`}
         >
-          {isUpcomingTasks && (
-            <h2 className="text-2xl text-gray-700 font-bold mb-6">
-              Study Session Reminder
-            </h2>
-          )}
+          <div className="flex items-center justify-between mb-6">
+            {isUpcomingTasks && (
+              <h2 className="text-2xl text-gray-700 font-bold">
+                Study Session Reminder
+              </h2>
+            )}
+            {(role === "admin" || role === "superadmin") && (
+              <button
+                onClick={() => setIsModalOpen(true)}
+                className="bg-primary-900 text-white px-4 py-2 rounded-md hover:bg-slate-800 transition"
+              >
+                + Add Session
+              </button>
+            )}
+          </div>
 
           <style>{`
-            .rbc-calendar {
-              font-family: "Inter", sans-serif;
-              font-size: 13px;
-            }
-            .rbc-toolbar {
-              margin-bottom: 12px;
-            }
-            .rbc-toolbar button {
-              font-size: 13px;
-              padding: 4px 12px;
-              border: 1px solid #D2D6DC;
-              border-radius: 6px;
-              color: #393E41;
-              background: #fff;
-            }
-            .rbc-toolbar button.rbc-active {
-              background: #393E41;
-              color: #fff;
-              border-color: #393E41;
-            }
-            .rbc-toolbar button:hover {
-              background: #F4F4F5;
-            }
-            .rbc-toolbar button.rbc-active:hover {
-              background: #24282A;
-              color: #fff;
-            }
-            .rbc-header {
-              padding: 8px 4px;
-              font-weight: 600;
-              font-size: 13px;
-              color: #6E7377;
-              border-bottom: 1px solid #E5E7EB;
-            }
-            .rbc-month-view {
-              border: 1px solid #E5E7EB;
-              border-radius: 8px;
-              overflow: hidden;
-            }
-            .rbc-day-bg + .rbc-day-bg,
-            .rbc-month-row + .rbc-month-row {
-              border-color: #E5E7EB;
-            }
-            .rbc-off-range-bg {
-              background: #FAFAFA;
-            }
-            .rbc-today {
-              background: #FFF8DE;
-            }
-            .rbc-date-cell {
-              padding: 4px 8px;
-              font-size: 13px;
-            }
-            .rbc-show-more {
-              color: #FFCC00;
-              font-weight: 600;
-              font-size: 11px;
-            }
+            .rbc-calendar { font-family: "Inter", sans-serif; font-size: 13px; }
+            .rbc-toolbar { margin-bottom: 12px; }
+            .rbc-toolbar button { font-size: 13px; padding: 4px 12px; border: 1px solid #D2D6DC; border-radius: 6px; color: #393E41; background: #fff; }
+            .rbc-toolbar button.rbc-active { background: #393E41; color: #fff; border-color: #393E41; }
+            .rbc-toolbar button:hover { background: #F4F4F5; }
+            .rbc-toolbar button.rbc-active:hover { background: #24282A; color: #fff; }
+            .rbc-header { padding: 8px 4px; font-weight: 600; font-size: 13px; color: #6E7377; border-bottom: 1px solid #E5E7EB; }
+            .rbc-month-view { border: 1px solid #E5E7EB; border-radius: 8px; overflow: hidden; }
+            .rbc-day-bg + .rbc-day-bg, .rbc-month-row + .rbc-month-row { border-color: #E5E7EB; }
+            .rbc-off-range-bg { background: #FAFAFA; }
+            .rbc-today { background: #FFF8DE; }
+            .rbc-date-cell { padding: 4px 8px; font-size: 13px; }
+            .rbc-show-more { color: #FFCC00; font-weight: 600; font-size: 11px; }
           `}</style>
 
           <Calendar
@@ -198,6 +204,138 @@ export default function StudySessionCalendar({ isUpcomingTasks = true }) {
           </div>
         )}
       </div>
+
+      <Modal
+        title="Create Study Session"
+        activeModal={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+      >
+        <form onSubmit={handleCreateSession} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Subject Code</label>
+            <input
+              type="text"
+              name="subjectCode"
+              required
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm px-3 py-2 border"
+              placeholder="e.g. SENG 41283"
+              value={formData.subjectCode}
+              onChange={handleChange}
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Topic</label>
+            <input
+              type="text"
+              name="topic"
+              required
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm px-3 py-2 border"
+              placeholder="e.g. Intro to ML"
+              value={formData.topic}
+              onChange={handleChange}
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Type</label>
+              <select
+                name="type"
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm px-3 py-2 border"
+                value={formData.type}
+                onChange={handleChange}
+              >
+                <option value="Lecture">Lecture</option>
+                <option value="Assignment">Assignment</option>
+                <option value="Lab">Lab</option>
+                <option value="Exam">Exam</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Date</label>
+              <input
+                type="date"
+                name="date"
+                required
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm px-3 py-2 border"
+                value={formData.date}
+                onChange={handleChange}
+              />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Time (e.g., 05.30 PM)</label>
+              <input
+                type="text"
+                name="time"
+                required
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm px-3 py-2 border"
+                placeholder="05.30 PM"
+                value={formData.time}
+                onChange={handleChange}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Repeat</label>
+              <select
+                name="repeatType"
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm px-3 py-2 border"
+                value={formData.repeatType}
+                onChange={handleChange}
+              >
+                <option value="Does not repeat">Does not repeat</option>
+                <option value="Every day">Every day</option>
+                <option value="Every week">Every week</option>
+                <option value="Every month">Every month</option>
+                <option value="Every year">Every year</option>
+                <option value="Custom">Custom</option>
+              </select>
+            </div>
+          </div>
+          {formData.repeatType === "Custom" && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Custom Repeat Formula</label>
+              <input
+                type="text"
+                name="customRepeat"
+                required
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm px-3 py-2 border"
+                placeholder="e.g. Every 2 weeks on Tuesday"
+                value={formData.customRepeat}
+                onChange={handleChange}
+              />
+            </div>
+          )}
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Description</label>
+            <textarea
+              name="description"
+              required
+              rows={3}
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm px-3 py-2 border"
+              placeholder="Additional details..."
+              value={formData.description}
+              onChange={handleChange}
+            />
+          </div>
+          <div className="flex justify-end pt-4">
+            <button
+              type="button"
+              onClick={() => setIsModalOpen(false)}
+              className="mr-3 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 border border-gray-300 rounded-md"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="bg-primary-900 text-white px-4 py-2 text-sm font-medium hover:bg-slate-800 rounded-md"
+            >
+              Create Session
+            </button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 }
