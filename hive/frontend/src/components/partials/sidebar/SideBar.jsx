@@ -72,6 +72,12 @@ const navItems = [
     path: "/admin/groups",
     allowed: ["admin"],
   },
+  {
+    icon: "clock",
+    name: "Study Session Reminders",
+    path: "/admin/session",
+    allowed: ["admin"],
+  },
   // Superadmin specific items
   {
     icon: "home",
