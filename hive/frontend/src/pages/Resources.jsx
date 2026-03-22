@@ -28,7 +28,7 @@ export default function Resources() {
   const [activeTab, setActiveTab] = useState("papers");
 
   return (
-    <div className="min-h-screen bg-primary ">
+    <div className="min-h-screen bg-white rounded-xl">
 
       {/* Tabs */}
 <div className="flex items-center gap-4 border-b px-6 pt-4">

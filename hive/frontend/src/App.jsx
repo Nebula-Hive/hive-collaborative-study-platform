@@ -6,6 +6,7 @@ import "react-toastify/dist/ReactToastify.css";
 import Dashboard from "./pages/Dashboard";
 import Chat from "./pages/Chat";
 import Resources from "./pages/Resources";
+import Subjects from "./pages/Subjects";
 import AISupport from "./pages/AISupport";
 import FlashCards from "./pages/FlashCards";
 import ProgressTracker from "./pages/ProgressTracker";
@@ -43,7 +44,8 @@ export default function App() {
           <Route path="/" element={<AppLayout />}>
             <Route index element={<Dashboard />} />
             <Route path="chat" element={<Chat />} />
-            <Route path="resources" element={<Resources />} />
+            <Route path="resources" element={<Subjects />} />
+            <Route path="resources/:subjectId" element={<Resources />} />
             <Route path="ai" element={<AISupport />} />
             <Route path="flashcards" element={<FlashCards />} />
             <Route path="progress" element={<ProgressTracker />} />
