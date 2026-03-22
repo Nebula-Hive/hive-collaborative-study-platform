@@ -283,22 +283,23 @@ export const getSessionsByMonth = async (month) => {
 
 export const getSessionById = async (id) => {
   const response = await instance.sessionService.get(`/api/studysession/${id}`, {
-    headers: instance.defaultHeaders() 
+    headers: instance.defaultHeaders()
   });
   return response.data;
 };
 
 //--------------Admin-only Session APIs------------------//
 
-export const createSession = async ({ title, description, date, time, duration }) => {
+export const createSession = async ({ subjectCode, type, topic, description, date, time }) => {
   const response = await instance.sessionService.post(
     `/api/studysession/create`,
     {
-      title,
+      subjectCode,
+      type,
+      topic,
       description,
       date,
       time,
-      duration,
     },
     {
       headers: instance.defaultHeaders()
@@ -307,12 +308,12 @@ export const createSession = async ({ title, description, date, time, duration }
   return response.data;
 };
 
-export const updateSession = async (id, { title, description, date, time, duration }) => {
+export const updateSession = async (id, { subjectCode, type, topic, description, date, time }) => {
   const response = await instance.sessionService.put(
     `/api/studysession/update/${id}`,
-    { title, description, date, time, duration },
+    { subjectCode, type, topic, description, date, time },
     {
-      headers: instance.defaultHeaders() 
+      headers: instance.defaultHeaders()
     },
   );
   return response.data;
@@ -322,7 +323,7 @@ export const deleteSession = async (id) => {
   const response = await instance.sessionService.delete(
     `/api/studysession/delete/${id}`,
     {
-      headers: instance.defaultHeaders() 
+      headers: instance.defaultHeaders()
     },
   );
   return response.data;
