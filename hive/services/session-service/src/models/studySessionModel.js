@@ -4,7 +4,7 @@ const studySessionSchema = new mongoose.Schema({
   subjectCode: { type: String, required: true },
   type: { type: String, required: true },
   topic: { type: String, required: true },
-  description: { type: String, required: true },
+  description: { type: String, required: false, default: "" },
 
   date: {
     type: Date,

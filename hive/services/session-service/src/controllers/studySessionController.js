@@ -149,8 +149,8 @@ const createSession = async (req, res) => {
   try {
     const { subjectCode, type, topic, description, date, time } = req.body;
 
-    if (!subjectCode || !type || !topic || !description || !date || !time) {
-      return res.status(400).json({ message: "All fields are required." });
+    if (!subjectCode || !type || !topic || !date || !time) {
+      return res.status(400).json({ message: "Subject code, type, topic, date and time are required." });
     }
 
     const sriLankaDate = parseSriLankaDate(date, time);
@@ -159,7 +159,7 @@ const createSession = async (req, res) => {
       subjectCode,
       type,
       topic,
-      description,
+      description: description || "",
       date: sriLankaDate,
       time
     });
@@ -193,12 +193,12 @@ const updateSession = async (req, res) => {
       subjectCode: subjectCode ?? existing.subjectCode,
       type: type ?? existing.type,
       topic: topic ?? existing.topic,
-      description: description ?? existing.description,
+      description: description ?? existing.description ?? "",
       time: time ?? existing.time,
     };
 
-    if (!updatePayload.subjectCode || !updatePayload.type || !updatePayload.topic || !updatePayload.description || !updatePayload.time) {
-      return res.status(400).json({ message: "All fields are required." });
+    if (!updatePayload.subjectCode || !updatePayload.type || !updatePayload.topic || !updatePayload.time) {
+      return res.status(400).json({ message: "Subject code, type, topic and time are required." });
     }
 
     if (date || time) {
