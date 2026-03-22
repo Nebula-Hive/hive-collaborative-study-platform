@@ -93,7 +93,7 @@ export default function Subjects() {
     <div className="min-h-screen p-8">
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-2xl font-bold text-gray-800">Resources</h1>
-        {role === "superadmin" && (
+        {(role === "superadmin" || role === "admin") && (
           <button
             onClick={() => setIsModalOpen(true)}
             className="bg-primary-900 text-white px-4 py-2 rounded-md hover:bg-slate-800 transition shadow-sm"
