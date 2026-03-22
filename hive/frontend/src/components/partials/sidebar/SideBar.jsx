@@ -21,7 +21,7 @@ const navItems = [
     icon: "folder-open",
     name: "Resources",
     path: "/resources",
-    allowed: ["student", "superadmin"],
+    allowed: ["student", "admin", "superadmin"],
   },
   {
     icon: "sparkles",

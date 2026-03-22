@@ -117,13 +117,21 @@ export default function Resources() {
           </div>
         </div>
 
-        {/* Superadmin Upload Button */}
-        {role === "superadmin" && (
+        {/* Admin / Superadmin Upload Buttons — contextual per tab */}
+        {(role === "superadmin" || role === "admin") && activeTab === "papers" && (
           <button
-            onClick={() => setIsModalOpen(true)}
+            onClick={() => { setResourceType("past_paper"); setIsModalOpen(true); }}
             className="mb-2 bg-primary-900 text-white px-4 py-2 rounded-md hover:bg-slate-800 transition shadow-sm text-sm font-medium"
           >
-            + Add Resource
+            + Add Past Paper
+          </button>
+        )}
+        {(role === "superadmin" || role === "admin") && activeTab === "notes" && (
+          <button
+            onClick={() => { setResourceType("note"); setIsModalOpen(true); }}
+            className="mb-2 bg-primary-900 text-white px-4 py-2 rounded-md hover:bg-slate-800 transition shadow-sm text-sm font-medium"
+          >
+            + Add Note
           </button>
         )}
       </div>
@@ -178,7 +186,7 @@ export default function Resources() {
 
       {/* Upload Resource Modal for Superadmin */}
       <Modal
-        title="Upload New Resource"
+        title={resourceType === "past_paper" ? "Upload Past Paper" : "Upload Note"}
         activeModal={isModalOpen}
         onClose={() => setIsModalOpen(false)}
       >
@@ -193,19 +201,6 @@ export default function Resources() {
               value={title}
               onChange={(e) => setTitle(e.target.value)}
             />
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Type</label>
-            <select
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm px-3 py-2 border"
-              value={resourceType}
-              onChange={(e) => setResourceType(e.target.value)}
-            >
-              <option value="past_paper">Past Paper</option>
-              <option value="note">Shared Note</option>
-              <option value="resource_book">Resource Book</option>
-            </select>
           </div>
 
           <div>
