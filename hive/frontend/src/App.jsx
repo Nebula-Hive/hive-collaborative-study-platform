@@ -11,6 +11,7 @@ import FlashCards from "./pages/FlashCards";
 import ProgressTracker from "./pages/ProgressTracker";
 import Notes from "./pages/Notes";
 import StudySession from "./pages/StudySession";
+import Profile from "./pages/Profile";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 
@@ -48,6 +49,7 @@ export default function App() {
             <Route path="progress" element={<ProgressTracker />} />
             <Route path="notes" element={<Notes />} />
             <Route path="session" element={<StudySession />} />
+            <Route path="profile" element={<Profile />} />
 
             <Route path="admin" element={<AdminDashboard />} />
             <Route path="admin/users" element={<UserManagement />} />

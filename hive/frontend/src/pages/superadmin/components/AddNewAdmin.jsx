@@ -6,9 +6,9 @@ import Modal from "@/components/ui/modal";
 import Button from "@/components/ui/Button";
 import Textinput from "@/components/ui/Textinput";
 import Notification from "@/components/ui/Notification";
-import { createUser } from "@/services";
+import { createAdmin } from "@/services";
 
-const UserValidationSchema = yup
+const AdminValidationSchema = yup
   .object({
     name: yup.string().required("Name is Required"),
     email: yup.string().email("Invalid email address").required("Email is Required"),
@@ -17,7 +17,7 @@ const UserValidationSchema = yup
   })
   .required();
 
-const AddNewUserModel = ({ isOpen, closeModal, onUserAdded }) => {
+const AddNewAdminModal = ({ isOpen, closeModal, onAdminAdded }) => {
   const [loading, setLoading] = useState(false);
 
   const {
@@ -26,19 +26,19 @@ const AddNewUserModel = ({ isOpen, closeModal, onUserAdded }) => {
     formState: { errors },
     reset,
   } = useForm({
-    resolver: yupResolver(UserValidationSchema),
+    resolver: yupResolver(AdminValidationSchema),
   });
 
-  const handleUserSubmit = async (data) => {
+  const handleAdminSubmit = async (data) => {
     setLoading(true);
     try {
-      await createUser(data);
-      Notification.success("User created successfully!");
+      await createAdmin(data);
+      Notification.success("Admin created successfully!");
       reset();
       closeModal();
-      onUserAdded(); // Callback to refresh the user list
+      onAdminAdded(); // Callback to refresh the admin list
     } catch (error) {
-      Notification.error(error?.response?.data?.message || "User creation failed!");
+      Notification.error(error?.response?.data?.message || "Admin creation failed!");
     } finally {
       setLoading(false);
     }
@@ -53,10 +53,10 @@ const AddNewUserModel = ({ isOpen, closeModal, onUserAdded }) => {
     <Modal
       activeModal={isOpen}
       onClose={handleClose}
-      title="Add New User"
+      title="Add New Admin"
       themeClass="bg-white"
     >
-      <form onSubmit={handleSubmit(handleUserSubmit)} className="space-y-4">
+      <form onSubmit={handleSubmit(handleAdminSubmit)} className="space-y-4">
         <Textinput
           name="name"
           label="Name"
@@ -93,7 +93,7 @@ const AddNewUserModel = ({ isOpen, closeModal, onUserAdded }) => {
             onClick={handleClose}
           />
           <Button
-            text="+ Add User"
+            text="+ Add Admin"
             className="btn-primary"
             type="submit"
             isLoading={loading}
@@ -104,4 +104,4 @@ const AddNewUserModel = ({ isOpen, closeModal, onUserAdded }) => {
   );
 };
 
-export default AddNewUserModel;
+export default AddNewAdminModal;

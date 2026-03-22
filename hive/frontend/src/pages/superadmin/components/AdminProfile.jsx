@@ -1,30 +1,30 @@
 import React, { useEffect, useMemo, useState } from "react";
 import Icon from "@/components/ui/Icon";
 
-const UserProfile = ({ user, onClose, onDelete, onUpdate }) => {
+const AdminProfile = ({ admin, onClose, onDelete, onUpdate }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
-    name: user?.name || "",
-    studentNumber: user?.studentNumber || "",
-    email: user?.email || "",
+    name: admin?.name || "",
+    studentNumber: admin?.studentNumber || "",
+    email: admin?.email || "",
   });
 
   useEffect(() => {
     setFormData({
-      name: user?.name || "",
-      studentNumber: user?.studentNumber || "",
-      email: user?.email || "",
+      name: admin?.name || "",
+      studentNumber: admin?.studentNumber || "",
+      email: admin?.email || "",
     });
     setIsEditing(false);
-  }, [user]);
+  }, [admin]);
 
   const hasChanges = useMemo(() => {
     return (
-      formData.name !== (user?.name || "") ||
-      formData.studentNumber !== (user?.studentNumber || "") ||
-      formData.email !== (user?.email || "")
+      formData.name !== (admin?.name || "") ||
+      formData.studentNumber !== (admin?.studentNumber || "") ||
+      formData.email !== (admin?.email || "")
     );
-  }, [formData, user]);
+  }, [formData, admin]);
 
   const handleSave = () => {
     if (!hasChanges) {
@@ -32,7 +32,7 @@ const UserProfile = ({ user, onClose, onDelete, onUpdate }) => {
       return;
     }
 
-    onUpdate?.(user?.studentNumber, {
+    onUpdate?.(admin?.studentNumber, {
       name: formData.name,
       studentNumber: formData.studentNumber,
       email: formData.email,
@@ -40,17 +40,17 @@ const UserProfile = ({ user, onClose, onDelete, onUpdate }) => {
   };
 
   const fields = [
-    { key: "name", label: "Student Name", value: formData.name, editable: true },
+    { key: "name", label: "Admin Name", value: formData.name, editable: true },
     { key: "studentNumber", label: "Student Number", value: formData.studentNumber, editable: true },
     { key: "email", label: "Email", value: formData.email, editable: true },
-    { key: "role", label: "Role", value: user?.role },
-    { key: "batch", label: "Batch", value: user?.batch || "N/A" },
+    { key: "role", label: "Role", value: admin?.role },
+    { key: "batch", label: "Batch", value: admin?.batch || "N/A" },
   ];
 
   return (
     <div className="flex flex-col h-full p-1">
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-lg font-semibold text-gray-900">{user?.name}</h2>
+        <h2 className="text-lg font-semibold text-gray-900">{admin?.name}</h2>
         <button onClick={onClose} className="p-1 rounded-md hover:bg-gray-100 transition">
           <Icon icon="heroicons-outline:x-mark" className="text-gray-700 w-5 h-5" />
         </button>
@@ -58,8 +58,8 @@ const UserProfile = ({ user, onClose, onDelete, onUpdate }) => {
 
       <div className="flex justify-start mb-8">
         <div className="relative w-20 h-20">
-          <div className="w-20 h-20 rounded-full bg-primary-500 flex items-center justify-center overflow-hidden text-white font-bold text-2xl">
-            {user?.name?.split(" ").map(n => n[0]).slice(0,2).join('').toUpperCase()}
+          <div className="w-20 h-20 rounded-full bg-blue-500 flex items-center justify-center overflow-hidden text-white font-bold text-2xl">
+            {admin?.name?.split(" ").map(n => n[0]).slice(0,2).join('').toUpperCase()}
           </div>
         </div>
       </div>
@@ -85,10 +85,10 @@ const UserProfile = ({ user, onClose, onDelete, onUpdate }) => {
 
       <div className="flex items-center gap-3 mt-8 pt-4 border-t">
         <button
-          onClick={() => onDelete(user?.studentNumber)}
+          onClick={() => onDelete(admin?.studentNumber)}
           className="px-6 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 transition cursor-pointer"
         >
-          Deactivate User
+          Deactivate Admin
         </button>
         <button
           onClick={() => {
@@ -107,4 +107,4 @@ const UserProfile = ({ user, onClose, onDelete, onUpdate }) => {
   );
 };
 
-export default UserProfile;
+export default AdminProfile;

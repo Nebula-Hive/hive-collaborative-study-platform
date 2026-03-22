@@ -1,7 +1,7 @@
 import React from "react";
 import Icon from "@/components/ui/Icon";
 
-const UserSearch = ({ searchQuery, setSearchQuery, handleSearch }) => {
+const AdminSearch = ({ searchQuery, setSearchQuery, handleSearch }) => {
   const handleKeyPress = (e) => {
     if (e.key === 'Enter') {
       handleSearch();
@@ -35,4 +35,4 @@ const UserSearch = ({ searchQuery, setSearchQuery, handleSearch }) => {
   );
 };
 
-export default UserSearch;
+export default AdminSearch;

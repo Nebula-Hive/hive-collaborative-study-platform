@@ -54,12 +54,40 @@ export const getAllUsers = async () => {
   return response.data;
 };
 
+export const getAllStudents = async () => {
+  const response = await instance.userService.get(`/api/students`, {
+    headers: instance.defaultHeaders()
+  });
+  return response.data;
+};
+
 export const getUserByStudentNumber = async (studentNumber) => {
   const response = await instance.userService.get(
     `/api/users/${encodeURIComponent(studentNumber)}`,
     {
       headers: instance.defaultHeaders()
     },
+  );
+  return response.data;
+};
+
+export const getMyProfile = async () => {
+  const response = await instance.userService.get(`/api/users/me`, {
+    headers: instance.defaultHeaders(),
+  });
+  return response.data;
+};
+
+export const updateMyProfile = async ({ name, password }) => {
+  const response = await instance.userService.put(
+    `/api/users/me`,
+    {
+      name,
+      password,
+    },
+    {
+      headers: instance.defaultHeaders(),
+    }
   );
   return response.data;
 };
@@ -82,9 +110,27 @@ export const createUser = async ({ name, email, password, studentNumber }) => {
 
 export const deleteUser = async (studentNumber) => {
   const response = await instance.userService.delete(
-    `/api/users/${encodeURIComponent(studentNumber) }`,
+    `/api/users/${encodeURIComponent(studentNumber)}`,
     {
       headers: instance.defaultHeaders()
+    },
+  );
+  return response.data;
+};
+
+export const updateUser = async (
+  studentNumber,
+  { name, email, studentNumber: nextStudentNumber }
+) => {
+  const response = await instance.userService.put(
+    `/api/users/${encodeURIComponent(studentNumber)}`,
+    {
+      name,
+      email,
+      studentNumber: nextStudentNumber,
+    },
+    {
+      headers: instance.defaultHeaders(),
     },
   );
   return response.data;
@@ -116,11 +162,40 @@ export const createAdmin = async ({ name, email, password, studentNumber }) => {
   return response.data;
 };
 
+export const promoteUserToAdmin = async (studentNumber) => {
+  const response = await instance.userService.post(
+    `/api/admins/promote/${encodeURIComponent(studentNumber)}`,
+    {},
+    {
+      headers: instance.defaultHeaders()
+    },
+  );
+  return response.data;
+};
+
 export const deleteAdmin = async (studentNumber) => {
   const response = await instance.userService.delete(
     `/api/admins/${encodeURIComponent(studentNumber)}`,
     {
       headers: instance.defaultHeaders()
+    },
+  );
+  return response.data;
+};
+
+export const updateAdmin = async (
+  studentNumber,
+  { name, email, studentNumber: nextStudentNumber }
+) => {
+  const response = await instance.userService.put(
+    `/api/admins/${encodeURIComponent(studentNumber)}`,
+    {
+      name,
+      email,
+      studentNumber: nextStudentNumber,
+    },
+    {
+      headers: instance.defaultHeaders(),
     },
   );
   return response.data;

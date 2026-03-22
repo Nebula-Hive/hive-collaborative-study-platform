@@ -119,11 +119,11 @@ const AppHeader = () => {
           className={`${isApplicationMenuOpen ? "flex" : "hidden"
             } justify-between items-center  w-full gap-10 px-5 py-0 lg:flex shadow-theme-md lg:justify-end lg:px-5 lg:shadow-none`}
         >
-          <>
-          {role === "superadmin" && (
-            <NewBtn />
-          )}
-          </>
+          {/* <>
+            {role === "superadmin" && (
+              <NewBtn />
+            )}
+          </> */}
           <UserDropdown
             user={{
               name: user?.displayName || user?.email || "User",
