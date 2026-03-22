@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useSidebar } from "@/context/sidebarContext";
 import { useAuth } from "@/context/AuthContext";
 import Icon from "@/components/ui/Icon";
@@ -102,15 +102,23 @@ const navItems = [
 const AppSidebar = () => {
   const { isExpanded, toggleSidebar, isMobileOpen } = useSidebar();
   const location = useLocation();
+  const navigate = useNavigate();
   const [openSubmenu, setOpenSubmenu] = useState(null);
-  const { authData } = useAuth();
 
-  // authData.role = "ADMIN"; // For testing purposes, set role to ADMIN
-
-  const { role } = useAuth(); // ✅ from firebase context
+  const { role, viewMode, toggleViewMode } = useAuth();
 
   const handleSubmenuToggle = (index) => {
     setOpenSubmenu(openSubmenu === index ? null : index);
+  };
+
+  const handleModeSwitch = () => {
+    toggleViewMode();
+    // Navigate to the appropriate dashboard
+    if (viewMode === "admin") {
+      navigate("/");
+    } else {
+      navigate("/admin");
+    }
   };
 
   return (
@@ -145,7 +153,7 @@ const AppSidebar = () => {
       <nav className="mt-4 px-4">
         <ul className="space-y-3">
           {navItems
-            .filter((item) => item.allowed.includes(role)) // ✅
+            .filter((item) => item.allowed.includes(viewMode))
             .map((item, index) => (
               <li key={index}>
                 {item.subItems ? (
@@ -189,6 +197,26 @@ const AppSidebar = () => {
             ))}
         </ul>
       </nav>
+
+      {/* Switch Mode Button — only for admins */}
+      {role === "admin" && (
+        <div className="absolute bottom-0 left-0 w-full px-4 py-4 border-t border-gray-200">
+          <button
+            onClick={handleModeSwitch}
+            className={`flex items-center w-full px-4 py-3 rounded-md bg-secondary-100 hover:bg-secondary-200 text-secondary-700 font-medium transition ${!isExpanded && !isMobileOpen ? "justify-center" : ""}`}
+          >
+            <Icon
+              icon={viewMode === "admin" ? "heroicons-outline:academic-cap" : "heroicons-outline:shield-check"}
+              className="w-5 h-5"
+            />
+            {(isExpanded || isMobileOpen) && (
+              <span className="ml-3 text-sm">
+                {viewMode === "admin" ? "Switch to Student" : "Switch to Admin"}
+              </span>
+            )}
+          </button>
+        </div>
+      )}
     </aside>
   );
 };
