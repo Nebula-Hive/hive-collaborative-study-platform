@@ -22,7 +22,7 @@ const eventStyleGetter = () => ({
 });
 
 export default function StudySessionCalendar({ isUpcomingTasks = true }) {
-  const { role } = useAuth();
+  const { role, viewMode } = useAuth();
   const [events, setEvents] = useState([]);
   const [tasks, setTasks] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -122,7 +122,7 @@ export default function StudySessionCalendar({ isUpcomingTasks = true }) {
                 Study Session Reminder
               </h2>
             )}
-            {(role === "admin" || role === "superadmin") && (
+            {(viewMode === "admin" || viewMode === "superadmin") && (
               <button
                 onClick={() => setIsModalOpen(true)}
                 className="bg-primary-900 text-white px-4 py-2 rounded-md hover:bg-slate-800 transition"
