@@ -23,11 +23,20 @@ const getErrorMessage = (error, fallbackMessage) => {
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [role, setRole] = useState("student");
+  const [viewMode, setViewMode] = useState("student");
   const [loading, setLoading] = useState(true);
 
   const setAuthState = (firebaseUser, backendUser = null) => {
+    const newRole = backendUser?.role || "student";
     setUser(firebaseUser || null);
-    setRole(backendUser?.role || "student");
+    setRole(newRole);
+    setViewMode(newRole);
+  };
+
+  const toggleViewMode = () => {
+    if (role === "admin") {
+      setViewMode((prev) => (prev === "admin" ? "student" : "admin"));
+    }
   };
 
   const clearSession = async () => {
@@ -116,15 +125,17 @@ export const AuthProvider = ({ children }) => {
     () => ({
       user,
       role,
+      viewMode,
       loading,
       isAuthenticated: !!user,
       signup,
       login,
       logout,
       refreshAuthUser,
-       token: localStorage.getItem(TOKEN_KEY),
+      toggleViewMode,
+      token: localStorage.getItem(TOKEN_KEY),
     }),
-    [user, role, loading]
+    [user, role, viewMode, loading]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
