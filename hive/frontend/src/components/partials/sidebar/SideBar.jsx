@@ -173,9 +173,9 @@ const AppSidebar = () => {
                   // Normal Navigation Link
                   <Link
                     to={item.path}
-                    className={`flex items-center px-4 py-3 rounded-md hover:bg-primary-100 transition ${!isExpanded ? "justify-center" : ""} ${location.pathname === item.path
+                    className={`flex items-center px-4 py-3 rounded-md transition ${!isExpanded ? "justify-center" : ""} ${location.pathname === item.path
                       ? "bg-primary-300 font-semibold text-primary-900"
-                      : "bg-primary-50"
+                      : "bg-primary-50 hover:bg-primary-100"
                       }`}
                   >
                     <Icon
