@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useSidebar } from "@/context/sidebarContext";
 import { useAuth } from "@/context/AuthContext";
 import Icon from "@/components/ui/Icon";
@@ -33,13 +33,13 @@ const navItems = [
     icon: "clock",
     name: "Study Session Reminders",
     path: "/session",
-    allowed: ["student" ],
+    allowed: ["student"],
   },
   {
     icon: "rectangle-stack",
     name: "Flashcard Creation",
     path: "/flashcards",
-    allowed: ["student" ],
+    allowed: ["student"],
   },
   {
     icon: "chart-bar",
@@ -53,7 +53,7 @@ const navItems = [
     path: "/notes",
     allowed: ["student"],
   },
-// Admin  specific items
+  // Admin  specific items
   {
     icon: "home",
     name: "Dashboard",
@@ -64,15 +64,21 @@ const navItems = [
     icon: "users",
     name: "User Management",
     path: "/admin/users",
-    allowed: [ "admin"],
+    allowed: ["admin"],
   },
   {
     icon: "users",
     name: "Groups",
     path: "/admin/groups",
-    allowed: [ "admin"],
+    allowed: ["admin"],
   },
-// Superadmin specific items
+  {
+    icon: "clock",
+    name: "Study Session Reminders",
+    path: "/admin/session",
+    allowed: ["admin"],
+  },
+  // Superadmin specific items
   {
     icon: "home",
     name: "Dashboard",
@@ -83,34 +89,42 @@ const navItems = [
     icon: "users",
     name: "User Management",
     path: "/superadmin/users",
-    allowed: [ "superadmin"],
+    allowed: ["superadmin"],
   },
   {
     icon: "shield-exclamation",
     name: "Admin Management",
     path: "/superadmin/admins",
-    allowed: [ "superadmin"],
+    allowed: ["superadmin"],
   },
   {
     icon: "users",
     name: "Groups",
     path: "/superadmin/groups",
-    allowed: [ "superadmin"],
+    allowed: ["superadmin"],
   },
 ];
 
 const AppSidebar = () => {
   const { isExpanded, toggleSidebar, isMobileOpen } = useSidebar();
   const location = useLocation();
+  const navigate = useNavigate();
   const [openSubmenu, setOpenSubmenu] = useState(null);
-  const { authData } = useAuth();
 
-  // authData.role = "ADMIN"; // For testing purposes, set role to ADMIN
-
-  const { role } = useAuth(); // ✅ from firebase context
+  const { role, viewMode, toggleViewMode } = useAuth();
 
   const handleSubmenuToggle = (index) => {
     setOpenSubmenu(openSubmenu === index ? null : index);
+  };
+
+  const handleModeSwitch = () => {
+    toggleViewMode();
+    // Navigate to the appropriate dashboard
+    if (viewMode === "admin") {
+      navigate("/");
+    } else {
+      navigate("/admin");
+    }
   };
 
   return (
@@ -145,7 +159,7 @@ const AppSidebar = () => {
       <nav className="mt-4 px-4">
         <ul className="space-y-3">
           {navItems
-            .filter((item) => item.allowed.includes(role)) // ✅
+            .filter((item) => item.allowed.includes(viewMode))
             .map((item, index) => (
               <li key={index}>
                 {item.subItems ? (
@@ -173,9 +187,9 @@ const AppSidebar = () => {
                   // Normal Navigation Link
                   <Link
                     to={item.path}
-                    className={`flex items-center px-4 py-3 rounded-md hover:bg-primary-100 transition ${!isExpanded ? "justify-center" : ""} ${location.pathname === item.path
+                    className={`flex items-center px-4 py-3 rounded-md transition ${!isExpanded ? "justify-center" : ""} ${location.pathname === item.path
                       ? "bg-primary-300 font-semibold text-primary-900"
-                      : "bg-primary-50"
+                      : "bg-primary-50 hover:bg-primary-100"
                       }`}
                   >
                     <Icon
@@ -189,6 +203,26 @@ const AppSidebar = () => {
             ))}
         </ul>
       </nav>
+
+      {/* Switch Mode Button — only for admins */}
+      {role === "admin" && (
+        <div className="absolute bottom-0 left-0 w-full px-4 py-4 border-t border-gray-200">
+          <button
+            onClick={handleModeSwitch}
+            className={`flex items-center w-full px-4 py-3 rounded-md bg-secondary-100 hover:bg-secondary-200 text-secondary-700 font-medium transition ${!isExpanded && !isMobileOpen ? "justify-center" : ""}`}
+          >
+            <Icon
+              icon={viewMode === "admin" ? "heroicons-outline:academic-cap" : "heroicons-outline:shield-check"}
+              className="w-5 h-5"
+            />
+            {(isExpanded || isMobileOpen) && (
+              <span className="ml-3 text-sm">
+                {viewMode === "admin" ? "Switch to Student" : "Switch to Admin"}
+              </span>
+            )}
+          </button>
+        </div>
+      )}
     </aside>
   );
 };
