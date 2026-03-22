@@ -211,6 +211,38 @@ export const updateAdmin = async (
 
 
 
+export const createSubject = async (subjectData) => {
+  const response = await instance.resourceService.post(`/resources/subjects`, subjectData, {
+    headers: instance.defaultHeaders()
+  });
+  return response.data;
+};
+
+export const getAllSubjects = async () => {
+  const response = await instance.resourceService.get(`/resources/subjects`, {
+    headers: instance.defaultHeaders()
+  });
+  return response.data;
+};
+
+export const getSubjectResources = async (subjectId) => {
+  const response = await instance.resourceService.get(`/resources/subjects/${encodeURIComponent(subjectId)}`, {
+    headers: instance.defaultHeaders()
+  });
+  return response.data;
+};
+
+export const uploadResource = async (formData) => {
+  // formData because we use multipart/form-data for file uploads
+  const headers = instance.defaultHeaders();
+  delete headers["Content-Type"]; // Axios will set multipart/form-data with boundary
+
+  const response = await instance.resourceService.post(`/resources/upload`, formData, {
+    headers: headers
+  });
+  return response.data;
+};
+
 //Resource Service APIs end
 
 //Chat Service APIs begin
