@@ -285,45 +285,111 @@ export const getBatchChatHistory = async (batch) => {
 
 //--------------Sessions------------------
 
+const isNotFoundError = (error) => {
+  return error?.response?.status === 404;
+};
+
+const sessionGetWithFallback = async (primaryPath, legacyPath) => {
+  try {
+    const response = await instance.sessionService.get(primaryPath, {
+      headers: instance.defaultHeaders()
+    });
+    return response.data;
+  } catch (error) {
+    if (!isNotFoundError(error)) {
+      throw error;
+    }
+
+    const fallbackResponse = await instance.sessionService.get(legacyPath, {
+      headers: instance.defaultHeaders()
+    });
+    return fallbackResponse.data;
+  }
+};
+
+const sessionPostWithFallback = async (primaryPath, legacyPath, payload) => {
+  try {
+    const response = await instance.sessionService.post(primaryPath, payload, {
+      headers: instance.defaultHeaders()
+    });
+    return response.data;
+  } catch (error) {
+    if (!isNotFoundError(error)) {
+      throw error;
+    }
+
+    const fallbackResponse = await instance.sessionService.post(legacyPath, payload, {
+      headers: instance.defaultHeaders()
+    });
+    return fallbackResponse.data;
+  }
+};
+
+const sessionPutWithFallback = async (primaryPath, legacyPath, payload) => {
+  try {
+    const response = await instance.sessionService.put(primaryPath, payload, {
+      headers: instance.defaultHeaders()
+    });
+    return response.data;
+  } catch (error) {
+    if (!isNotFoundError(error)) {
+      throw error;
+    }
+
+    const fallbackResponse = await instance.sessionService.put(legacyPath, payload, {
+      headers: instance.defaultHeaders()
+    });
+    return fallbackResponse.data;
+  }
+};
+
+const sessionDeleteWithFallback = async (primaryPath, legacyPath) => {
+  try {
+    const response = await instance.sessionService.delete(primaryPath, {
+      headers: instance.defaultHeaders()
+    });
+    return response.data;
+  } catch (error) {
+    if (!isNotFoundError(error)) {
+      throw error;
+    }
+
+    const fallbackResponse = await instance.sessionService.delete(legacyPath, {
+      headers: instance.defaultHeaders()
+    });
+    return fallbackResponse.data;
+  }
+};
+
 export const getAllSessions = async () => {
-  const response = await instance.sessionService.get(`/api/studysession`, {
-    headers: instance.defaultHeaders()
-  });
-  return response.data;
+  return sessionGetWithFallback(`/api/sessions`, `/api/studysession`);
 };
 
 export const getCurrentMonthSessions = async () => {
-  const response = await instance.sessionService.get(`/api/studysession/current-month`, {
-    headers: instance.defaultHeaders()
-  });
-  return response.data;
+  return sessionGetWithFallback(`/api/sessions/current-month`, `/api/studysession/current-month`);
 }
 
 export const getNextMonthSessions = async () => {
-  const response = await instance.sessionService.get(`/api/studysession/next-month`, {
-    headers: instance.defaultHeaders()
-  });
-  return response.data;
+  return sessionGetWithFallback(`/api/sessions/next-month`, `/api/studysession/next-month`);
 }
 
-export const getSessionsByMonth = async (month) => {
-  const response = await instance.sessionService.get(`/api/studysession/month/${month}`, {
-    headers: instance.defaultHeaders()
-  });
-  return response.data;
+export const getSessionsByMonth = async (month, year) => {
+  const query = year ? `?year=${encodeURIComponent(year)}` : "";
+  return sessionGetWithFallback(
+    `/api/sessions/month/${month}${query}`,
+    `/api/studysession/month/${month}`
+  );
 }
 
 export const getSessionById = async (id) => {
-  const response = await instance.sessionService.get(`/api/studysession/${id}`, {
-    headers: instance.defaultHeaders()
-  });
-  return response.data;
+  return sessionGetWithFallback(`/api/sessions/${id}`, `/api/studysession/${id}`);
 };
 
 //--------------Admin-only Session APIs------------------//
 
 export const createSession = async ({ subjectCode, type, topic, description, date, time }) => {
-  const response = await instance.sessionService.post(
+  return sessionPostWithFallback(
+    `/api/sessions`,
     `/api/studysession/create`,
     {
       subjectCode,
@@ -332,33 +398,20 @@ export const createSession = async ({ subjectCode, type, topic, description, dat
       description,
       date,
       time,
-    },
-    {
-      headers: instance.defaultHeaders()
-    },
+    }
   );
-  return response.data;
 };
 
 export const updateSession = async (id, { subjectCode, type, topic, description, date, time }) => {
-  const response = await instance.sessionService.put(
+  return sessionPutWithFallback(
+    `/api/sessions/${id}`,
     `/api/studysession/update/${id}`,
     { subjectCode, type, topic, description, date, time },
-    {
-      headers: instance.defaultHeaders()
-    },
   );
-  return response.data;
 };
 
 export const deleteSession = async (id) => {
-  const response = await instance.sessionService.delete(
-    `/api/studysession/delete/${id}`,
-    {
-      headers: instance.defaultHeaders()
-    },
-  );
-  return response.data;
+  return sessionDeleteWithFallback(`/api/sessions/${id}`, `/api/studysession/delete/${id}`);
 };
 
 //Session Service APIs end
