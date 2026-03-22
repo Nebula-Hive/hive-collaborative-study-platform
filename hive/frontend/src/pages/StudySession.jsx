@@ -1,131 +1,452 @@
-import { useState, useEffect } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Calendar, momentLocalizer } from "react-big-calendar";
 import moment from "moment";
 import "react-big-calendar/lib/css/react-big-calendar.css";
-import { getAllSessions, createSession } from "@/services";
+import {
+  createSession,
+  deleteSession,
+  getAllSessions,
+  getCurrentMonthSessions,
+  getSessionById,
+  getSessionsByMonth,
+  updateSession,
+} from "@/services";
 import { useAuth } from "@/context/AuthContext";
 import Modal from "@/components/ui/Modal";
 import { toast } from "react-toastify";
 
 const localizer = momentLocalizer(moment);
 
-// Custom event style (matches Dashboard)
-const eventStyleGetter = () => ({
-  style: {
-    backgroundColor: "#FFCC00",
-    color: "#4D3D00",
-    border: "none",
-    borderRadius: "4px",
-    fontSize: "12px",
-    padding: "2px 6px",
-  },
-});
+const SESSION_TYPES = [
+  "Lecture",
+  "Tutorial",
+  "Lab",
+  "Assignment",
+  "Practical",
+  "Revision",
+  "Other",
+];
+
+const PASTEL_COLORS = [
+  { bg: "#FFF4CC", text: "#4D3D00", border: "#FFCC00" },
+  { bg: "#EAF9EE", text: "#205D3A", border: "#50C793" },
+  { bg: "#EAF8FF", text: "#0D4B66", border: "#0CE7FA" },
+  { bg: "#FFEFF4", text: "#7A3650", border: "#F68B8D" },
+  { bg: "#F1F4F7", text: "#475569", border: "#A0A4A7" },
+  { bg: "#F4EEFF", text: "#50337A", border: "#BDA3FF" },
+  { bg: "#FFF1E8", text: "#7E4520", border: "#FA916B" },
+];
+
+const emptyForm = {
+  subjectCode: "",
+  type: "Lecture",
+  topic: "",
+  description: "",
+  date: "",
+  timeInput: "",
+};
+
+const parseDotTime = (timeString = "") => {
+  const [timePart = "", modifier = "AM"] = timeString.trim().split(" ");
+  const [hourPart = "00", minutePart = "00"] = timePart.split(".");
+  let hour = Number(hourPart);
+  const minute = Number(minutePart);
+
+  if (Number.isNaN(hour) || Number.isNaN(minute)) {
+    return { hour: 0, minute: 0 };
+  }
+
+  if (modifier === "PM" && hour !== 12) hour += 12;
+  if (modifier === "AM" && hour === 12) hour = 0;
+
+  return { hour, minute };
+};
+
+const from24HourToDotMeridiem = (timeValue) => {
+  if (!timeValue || !timeValue.includes(":")) return "";
+
+  const [hoursStr, minutesStr] = timeValue.split(":");
+  let hours = Number(hoursStr);
+  const minutes = Number(minutesStr);
+  const period = hours >= 12 ? "PM" : "AM";
+
+  hours = hours % 12;
+  if (hours === 0) hours = 12;
+
+  return `${String(hours).padStart(2, "0")}.${String(minutes).padStart(2, "0")} ${period}`;
+};
+
+const to24HourInput = (dotTime) => {
+  if (!dotTime) return "";
+  const { hour, minute } = parseDotTime(dotTime);
+  return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
+};
+
+const toSriLankaDate = (dateValue) => {
+  const utcDate = new Date(dateValue);
+  return new Date(utcDate.getTime() + 5.5 * 60 * 60 * 1000);
+};
+
+const toYmdDate = (dateValue) => {
+  const date = toSriLankaDate(dateValue);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
+const formatDdMmYyyy = (dateValue) => {
+  return toSriLankaDate(dateValue).toLocaleDateString("en-GB", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
+};
+
+const formatFullDate = (dateValue) => {
+  return toSriLankaDate(dateValue).toLocaleDateString("en-GB", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+};
+
+const combineSessionDateAndTime = (session) => {
+  const base = toSriLankaDate(session.date);
+  const { hour, minute } = parseDotTime(session.time);
+  base.setHours(hour, minute, 0, 0);
+  return base;
+};
+
+const sortByDateTimeAsc = (a, b) => combineSessionDateAndTime(a) - combineSessionDateAndTime(b);
+
+const getSubjectColor = (subjectCode = "") => {
+  const normalized = subjectCode.trim().toUpperCase();
+  let hash = 0;
+  for (let i = 0; i < normalized.length; i += 1) {
+    hash = (hash << 5) - hash + normalized.charCodeAt(i);
+    hash |= 0;
+  }
+  return PASTEL_COLORS[Math.abs(hash) % PASTEL_COLORS.length];
+};
+
+const isSameMonth = (dateValue, referenceDate) => {
+  const sessionDate = toSriLankaDate(dateValue);
+  return (
+    sessionDate.getMonth() === referenceDate.getMonth() &&
+    sessionDate.getFullYear() === referenceDate.getFullYear()
+  );
+};
+
+function SessionToolbar({ label, onNavigate, onView, view }) {
+  const viewOptions = ["month", "week", "day", "agenda"];
+
+  return (
+    <div className="study-toolbar">
+      <div className="study-toolbar-left">
+        <button type="button" onClick={() => onNavigate("TODAY")}>Today</button>
+        <button type="button" onClick={() => onNavigate("PREV")}>Back</button>
+        <button type="button" onClick={() => onNavigate("NEXT")}>Next</button>
+      </div>
+      <h3 className="study-toolbar-title">{label}</h3>
+      <div className="study-toolbar-right">
+        {viewOptions.map((viewOption) => (
+          <button
+            key={viewOption}
+            type="button"
+            onClick={() => onView(viewOption)}
+            className={view === viewOption ? "active" : ""}
+          >
+            {viewOption.charAt(0).toUpperCase() + viewOption.slice(1)}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 export default function StudySessionCalendar({ isUpcomingTasks = true }) {
-  const { role, viewMode } = useAuth();
-  const [events, setEvents] = useState([]);
-  const [tasks, setTasks] = useState([]);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [formData, setFormData] = useState({
-    subjectCode: "",
-    type: "Lecture",
-    topic: "",
-    date: "",
-    time: "",
-    description: "",
-    repeatType: "Does not repeat",
-    customRepeat: "",
-  });
+  const { viewMode } = useAuth();
+  const isAdmin = viewMode === "admin" || viewMode === "superadmin";
 
-  const loadSessions = () => {
-    getAllSessions()
-      .then((sessions) => {
-        const calendarEvents = sessions.map((session) => {
-          const utcDate = new Date(session.date);
-          const localSriLankaDate = new Date(
-            utcDate.getTime() + 5.5 * 60 * 60 * 1000
-          );
+  const [view, setView] = useState("month");
+  const [currentDate, setCurrentDate] = useState(new Date());
+  const [allSessions, setAllSessions] = useState([]);
+  const [monthSessions, setMonthSessions] = useState([]);
 
-          return {
-            title: session.subjectCode,
-            start: localSriLankaDate,
-            end: localSriLankaDate,
-            topic: session.topic,
-            type: session.type,
-            time: session.time,
-            description: session.description,
-          };
-        });
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [selectedSession, setSelectedSession] = useState(null);
 
-        setEvents(calendarEvents);
+  const [createForm, setCreateForm] = useState(emptyForm);
+  const [editForm, setEditForm] = useState(emptyForm);
 
-        const todayColombo = new Date();
-        todayColombo.setHours(0, 0, 0, 0);
+  const [loading, setLoading] = useState(true);
+  const [monthLoading, setMonthLoading] = useState(false);
+  const [detailLoading, setDetailLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [error, setError] = useState("");
 
-        const futureTasks = sessions
-          .map((task) => {
-            const utc = new Date(task.date);
-            const local = new Date(utc.getTime() + 5.5 * 60 * 60 * 1000);
-            return { ...task, localDate: local };
-          })
-          .filter((task) => task.localDate >= todayColombo)
-          .sort((a, b) => a.localDate - b.localDate);
+  const applyUpsert = useCallback((session) => {
+    setAllSessions((prev) => {
+      const exists = prev.some((item) => item._id === session._id);
+      const next = exists
+        ? prev.map((item) => (item._id === session._id ? session : item))
+        : [...prev, session];
+      return next.sort(sortByDateTimeAsc);
+    });
 
-        setTasks(futureTasks);
-      })
-      .catch((err) => {
-        console.error("Failed to load study sessions:", err);
-      });
-  };
+    setMonthSessions((prev) => {
+      const exists = prev.some((item) => item._id === session._id);
+      const inCurrentMonth = isSameMonth(session.date, currentDate);
 
-  useEffect(() => {
-    loadSessions();
+      if (!exists && !inCurrentMonth) {
+        return prev;
+      }
+
+      const upserted = exists
+        ? prev.map((item) => (item._id === session._id ? session : item))
+        : [...prev, session];
+
+      return upserted
+        .filter((item) => isSameMonth(item.date, currentDate))
+        .sort(sortByDateTimeAsc);
+    });
+  }, [currentDate]);
+
+  const applyRemove = useCallback((sessionId) => {
+    setAllSessions((prev) => prev.filter((item) => item._id !== sessionId));
+    setMonthSessions((prev) => prev.filter((item) => item._id !== sessionId));
   }, []);
 
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+  const loadMonthSessions = useCallback(async (targetDate) => {
+    setMonthLoading(true);
+    try {
+      const month = targetDate.getMonth() + 1;
+      const year = targetDate.getFullYear();
+      const sessions = await getSessionsByMonth(month, year);
+      setMonthSessions((sessions || []).sort(sortByDateTimeAsc));
+    } catch (requestError) {
+      setError(requestError?.response?.data?.message || "Failed to load calendar sessions.");
+    } finally {
+      setMonthLoading(false);
+    }
+  }, []);
+
+  const loadInitialData = useCallback(async () => {
+    setLoading(true);
+    setError("");
+
+    try {
+      const [all, currentMonth] = await Promise.all([
+        getAllSessions(),
+        getCurrentMonthSessions(),
+      ]);
+      setAllSessions((all || []).sort(sortByDateTimeAsc));
+      setMonthSessions((currentMonth || []).sort(sortByDateTimeAsc));
+    } catch (requestError) {
+      setError(requestError?.response?.data?.message || "Failed to load study sessions.");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadInitialData();
+  }, [loadInitialData]);
+
+  const agendaSessions = useMemo(() => {
+    return allSessions
+      .filter((session) => {
+        const date = combineSessionDateAndTime(session);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        return date >= today;
+      })
+      .sort(sortByDateTimeAsc);
+  }, [allSessions]);
+
+  const upcomingSessions = useMemo(() => agendaSessions.slice(0, 10), [agendaSessions]);
+
+  const calendarSource = view === "month" ? monthSessions : allSessions;
+  const events = useMemo(
+    () =>
+      calendarSource.map((session) => {
+        const start = combineSessionDateAndTime(session);
+        const end = new Date(start.getTime() + 60 * 60 * 1000);
+        return {
+          ...session,
+          title: session.subjectCode,
+          start,
+          end,
+        };
+      }),
+    [calendarSource]
+  );
+
+  const eventStyleGetter = (event) => {
+    const palette = getSubjectColor(event.subjectCode || event.title);
+    return {
+      style: {
+        backgroundColor: palette.bg,
+        color: palette.text,
+        border: `1px solid ${palette.border}`,
+        borderRadius: "6px",
+        fontSize: "11px",
+        fontWeight: 600,
+        padding: "1px 6px",
+      },
+    };
+  };
+
+  const resetCreateForm = () => setCreateForm(emptyForm);
+
+  const openSessionDetails = async (sessionOrId) => {
+    const sessionId = typeof sessionOrId === "string" ? sessionOrId : sessionOrId._id;
+    setIsDetailModalOpen(true);
+    setIsEditing(false);
+    setDetailLoading(true);
+
+    try {
+      const fullSession = await getSessionById(sessionId);
+      setSelectedSession(fullSession);
+      setEditForm({
+        subjectCode: fullSession.subjectCode || "",
+        type: fullSession.type || "Lecture",
+        topic: fullSession.topic || "",
+        description: fullSession.description || "",
+        date: toYmdDate(fullSession.date),
+        timeInput: to24HourInput(fullSession.time),
+      });
+    } catch (requestError) {
+      toast.error(requestError?.response?.data?.message || "Failed to load session details");
+      setIsDetailModalOpen(false);
+    } finally {
+      setDetailLoading(false);
+    }
   };
 
   const handleCreateSession = async (e) => {
     e.preventDefault();
+    const formattedTime = from24HourToDotMeridiem(createForm.timeInput);
+
+    if (!formattedTime) {
+      toast.error("Please select a valid time.");
+      return;
+    }
+
+    setSubmitting(true);
     try {
-      await createSession(formData);
-      toast.success("Study session created successfully");
-      setIsModalOpen(false);
-      setFormData({
-        subjectCode: "",
-        type: "Lecture",
-        topic: "",
-        date: "",
-        time: "",
-        description: "",
-        repeatType: "Does not repeat",
-        customRepeat: "",
+      const created = await createSession({
+        subjectCode: createForm.subjectCode.trim(),
+        type: createForm.type,
+        topic: createForm.topic.trim(),
+        description: createForm.description.trim(),
+        date: createForm.date,
+        time: formattedTime,
       });
-      loadSessions();
+
+      applyUpsert(created);
+      toast.success("Study session created successfully");
+      setIsCreateModalOpen(false);
+      resetCreateForm();
     } catch (err) {
       toast.error(err?.response?.data?.message || "Failed to create session");
+    } finally {
+      setSubmitting(false);
     }
+  };
+
+  const handleUpdateSession = async (e) => {
+    e.preventDefault();
+    if (!selectedSession?._id) return;
+
+    const formattedTime = from24HourToDotMeridiem(editForm.timeInput);
+
+    if (!formattedTime) {
+      toast.error("Please select a valid time.");
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const updated = await updateSession(selectedSession._id, {
+        subjectCode: editForm.subjectCode.trim(),
+        type: editForm.type,
+        topic: editForm.topic.trim(),
+        description: editForm.description.trim(),
+        date: editForm.date,
+        time: formattedTime,
+      });
+
+      applyUpsert(updated);
+      setSelectedSession(updated);
+      setIsEditing(false);
+      toast.success("Study session updated successfully");
+    } catch (err) {
+      toast.error(err?.response?.data?.message || "Failed to update session");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleDeleteSession = async () => {
+    if (!selectedSession?._id) return;
+    const confirmed = window.confirm("Are you sure you want to delete this study session?");
+    if (!confirmed) return;
+
+    setDeleting(true);
+    try {
+      await deleteSession(selectedSession._id);
+      applyRemove(selectedSession._id);
+      toast.success("Study session deleted successfully");
+      setIsDetailModalOpen(false);
+      setSelectedSession(null);
+      setIsEditing(false);
+    } catch (err) {
+      toast.error(err?.response?.data?.message || "Failed to delete session");
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const handleNavigate = async (date, currentView) => {
+    setCurrentDate(date);
+    if (currentView === "month") {
+      await loadMonthSessions(date);
+    }
+  };
+
+  const updateCreateForm = (field, value) => {
+    setCreateForm((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const updateEditForm = (field, value) => {
+    setEditForm((prev) => ({ ...prev, [field]: value }));
   };
 
   return (
     <div className="min-h-screen bg-primary">
-      <div className="flex flex-col lg:flex-row gap-4 p-4">
+      <div className="flex flex-col xl:flex-row gap-4 p-4">
         {/* Calendar Section */}
         <div
-          className={`w-full bg-white rounded-xl border border-gray-200 p-6 shadow-sm ${isUpcomingTasks ? "lg:w-4/5" : "lg:w-full"
+          className={`w-full bg-white rounded-xl border border-gray-200 p-6 shadow-sm ${isUpcomingTasks ? "xl:w-4/5" : "xl:w-full"
             }`}
         >
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center justify-between gap-3 mb-6">
             {isUpcomingTasks && (
               <h2 className="text-2xl text-gray-700 font-bold">
                 Study Session Reminder
               </h2>
             )}
-            {(viewMode === "admin" || viewMode === "superadmin") && (
+
+            {isAdmin && (
               <button
-                onClick={() => setIsModalOpen(true)}
-                className="bg-primary-900 text-white px-4 py-2 rounded-md hover:bg-slate-800 transition"
+                onClick={() => setIsCreateModalOpen(true)}
+                className="bg-primary-900 text-white px-4 py-2 rounded-md hover:bg-slate-800 transition font-semibold"
               >
                 + Add Session
               </button>
@@ -134,69 +455,156 @@ export default function StudySessionCalendar({ isUpcomingTasks = true }) {
 
           <style>{`
             .rbc-calendar { font-family: "Inter", sans-serif; font-size: 13px; }
-            .rbc-toolbar { margin-bottom: 12px; }
-            .rbc-toolbar button { font-size: 13px; padding: 4px 12px; border: 1px solid #D2D6DC; border-radius: 6px; color: #393E41; background: #fff; }
-            .rbc-toolbar button.rbc-active { background: #393E41; color: #fff; border-color: #393E41; }
-            .rbc-toolbar button:hover { background: #F4F4F5; }
-            .rbc-toolbar button.rbc-active:hover { background: #24282A; color: #fff; }
+
+            .study-toolbar { display: grid; grid-template-columns: 1fr auto 1fr; gap: 12px; align-items: center; margin-bottom: 12px; }
+            .study-toolbar-left, .study-toolbar-right { display: flex; gap: 8px; }
+            .study-toolbar-right { justify-content: flex-end; }
+            .study-toolbar-title { text-align: center; color: #393E41; font-size: 16px; font-weight: 700; }
+
+            .study-toolbar button { font-size: 13px; padding: 6px 12px; border: 1px solid #D2D6DC; border-radius: 6px; color: #393E41; background: #fff; }
+            .study-toolbar button:hover { background: #F4F4F5; }
+            .study-toolbar-right button.active { background: #393E41; color: #fff; border-color: #393E41; }
+
             .rbc-header { padding: 8px 4px; font-weight: 600; font-size: 13px; color: #6E7377; border-bottom: 1px solid #E5E7EB; }
             .rbc-month-view { border: 1px solid #E5E7EB; border-radius: 8px; overflow: hidden; }
             .rbc-day-bg + .rbc-day-bg, .rbc-month-row + .rbc-month-row { border-color: #E5E7EB; }
             .rbc-off-range-bg { background: #FAFAFA; }
+            .rbc-off-range .rbc-date-cell { color: #A0A4A7; }
             .rbc-today { background: #FFF8DE; }
             .rbc-date-cell { padding: 4px 8px; font-size: 13px; }
             .rbc-show-more { color: #FFCC00; font-weight: 600; font-size: 11px; }
+            .rbc-event { box-shadow: none; }
+
+            @media (max-width: 900px) {
+              .study-toolbar { grid-template-columns: 1fr; }
+              .study-toolbar-title { text-align: left; }
+              .study-toolbar-right { justify-content: flex-start; flex-wrap: wrap; }
+              .study-toolbar-left { flex-wrap: wrap; }
+            }
           `}</style>
 
-          <Calendar
-            localizer={localizer}
-            events={events}
-            startAccessor="start"
-            endAccessor="end"
-            defaultView="month"
-            views={["month", "week", "day", "agenda"]}
-            style={{ height: 520 }}
-            eventPropGetter={eventStyleGetter}
-            tooltipAccessor={(event) =>
-              `${event.title}\nTime: ${event.time}\nType: ${event.type}\nTopic: ${event.topic}`
-            }
-          />
+          {loading && (
+            <div className="h-[520px] grid place-items-center text-secondary-600 font-medium">
+              Loading study sessions...
+            </div>
+          )}
+
+          {!loading && error && (
+            <div className="rounded-md border border-danger-200 bg-danger-50 p-4 text-danger-700 mb-4">
+              {error}
+            </div>
+          )}
+
+          {!loading && (
+            <>
+              {monthLoading && view === "month" && (
+                <div className="text-sm text-secondary-500 mb-3">Refreshing month view...</div>
+              )}
+
+              <Calendar
+                localizer={localizer}
+                events={events}
+                startAccessor="start"
+                endAccessor="end"
+                view={view}
+                date={currentDate}
+                onView={setView}
+                onNavigate={handleNavigate}
+                views={["month", "week", "day", "agenda"]}
+                style={{ height: 520 }}
+                popup
+                messages={{ showMore: (total) => `+${total} more` }}
+                components={{
+                  toolbar: SessionToolbar,
+                }}
+                eventPropGetter={eventStyleGetter}
+                onSelectEvent={(event) => openSessionDetails(event._id)}
+                tooltipAccessor={(event) =>
+                  `${event.title}\n${event.topic}\n${event.time}\n${event.type}`
+                }
+              />
+            </>
+          )}
+
+          {!isAdmin && (
+            <div className="mt-6 rounded-xl border border-gray-200 overflow-hidden">
+              <div className="bg-primary-50 px-4 py-3 font-semibold text-secondary-700">
+                Session List View
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[860px]">
+                  <thead className="bg-gray-50 text-left text-sm text-secondary-600">
+                    <tr>
+                      <th className="px-4 py-3">Subject Code</th>
+                      <th className="px-4 py-3">Type</th>
+                      <th className="px-4 py-3">Topic</th>
+                      <th className="px-4 py-3">Date</th>
+                      <th className="px-4 py-3">Time</th>
+                      <th className="px-4 py-3">Description</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {allSessions.length === 0 && (
+                      <tr>
+                        <td className="px-4 py-6 text-secondary-500" colSpan={6}>
+                          No sessions available.
+                        </td>
+                      </tr>
+                    )}
+
+                    {allSessions.map((session) => {
+                      const sessionDateTime = combineSessionDateAndTime(session);
+                      const isPast = sessionDateTime < new Date();
+                      return (
+                        <tr
+                          key={session._id}
+                          className={`border-t border-gray-100 cursor-pointer hover:bg-primary-50 ${isPast ? "text-gray-400" : "text-secondary-700"}`}
+                          onClick={() => openSessionDetails(session._id)}
+                        >
+                          <td className="px-4 py-3 font-semibold">{session.subjectCode}</td>
+                          <td className="px-4 py-3">{session.type}</td>
+                          <td className="px-4 py-3">{session.topic}</td>
+                          <td className="px-4 py-3">{formatDdMmYyyy(session.date)}</td>
+                          <td className="px-4 py-3">{session.time}</td>
+                          <td className="px-4 py-3">{session.description}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Upcoming Tasks Sidebar */}
         {isUpcomingTasks && (
-          <div className="w-full lg:w-1/5 bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+          <div className="w-full xl:w-1/5 bg-white rounded-xl border border-gray-200 p-6 shadow-sm max-h-[760px] flex flex-col">
             <h3 className="font-bold text-lg mb-5 text-gray-800">
               Upcoming Tasks
             </h3>
-            <div className="space-y-4">
-              {tasks.slice(0, 5).map((task) => {
-                const utc = new Date(task.date);
-                const local = new Date(utc.getTime() + 5.5 * 60 * 60 * 1000);
-                const dateStr = local.toLocaleDateString("en-GB", {
-                  day: "2-digit",
-                  month: "2-digit",
-                  year: "numeric",
-                });
+            <div className="space-y-4 overflow-y-auto pr-1">
+              {upcomingSessions.map((task) => (
+                <button
+                  type="button"
+                  key={task._id}
+                  className="w-full text-left bg-gray-50 p-4 rounded-lg border-l-[6px] border-primary-500 shadow-sm hover:bg-primary-50 transition"
+                  onClick={() => openSessionDetails(task._id)}
+                >
+                  <p className="font-semibold text-base text-gray-900">
+                    {task.topic}
+                  </p>
+                  <p className="text-sm text-gray-600 mt-1">
+                    {formatDdMmYyyy(task.date)} • {task.time}
+                  </p>
+                  <span className="inline-block mt-2 text-xs bg-primary-100 text-primary-900 px-2 py-1 rounded-md font-medium">
+                    {task.type}
+                  </span>
+                </button>
+              ))}
 
-                return (
-                  <div
-                    key={task._id}
-                    className="bg-gray-50 p-4 rounded-lg border-l-4 border-yellow-400 shadow-sm"
-                  >
-                    <p className="font-semibold text-base text-gray-900">
-                      {task.topic}
-                    </p>
-                    <p className="text-sm text-gray-600 mt-1">
-                      {dateStr} • {task.time}
-                    </p>
-                    <p className="text-xs text-gray-500 mt-1">{task.type}</p>
-                  </div>
-                );
-              })}
-
-              {tasks.length === 0 && (
-                <p className="text-gray-500 text-sm">
+              {upcomingSessions.length === 0 && (
+                <p className="text-gray-500 text-sm leading-6">
                   No upcoming sessions.
                 </p>
               )}
@@ -207,134 +615,274 @@ export default function StudySessionCalendar({ isUpcomingTasks = true }) {
 
       <Modal
         title="Create Study Session"
-        activeModal={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        activeModal={isCreateModalOpen}
+        onClose={() => {
+          setIsCreateModalOpen(false);
+          resetCreateForm();
+        }}
       >
         <form onSubmit={handleCreateSession} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700">Subject Code</label>
             <input
               type="text"
-              name="subjectCode"
               required
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm px-3 py-2 border"
               placeholder="e.g. SENG 41283"
-              value={formData.subjectCode}
-              onChange={handleChange}
+              value={createForm.subjectCode}
+              onChange={(e) => updateCreateForm("subjectCode", e.target.value)}
             />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700">Topic</label>
             <input
               type="text"
-              name="topic"
               required
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm px-3 py-2 border"
               placeholder="e.g. Intro to ML"
-              value={formData.topic}
-              onChange={handleChange}
+              value={createForm.topic}
+              onChange={(e) => updateCreateForm("topic", e.target.value)}
             />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700">Type</label>
               <select
-                name="type"
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm px-3 py-2 border"
-                value={formData.type}
-                onChange={handleChange}
+                value={createForm.type}
+                onChange={(e) => updateCreateForm("type", e.target.value)}
               >
-                <option value="Lecture">Lecture</option>
-                <option value="Assignment">Assignment</option>
-                <option value="Lab">Lab</option>
-                <option value="Exam">Exam</option>
-                <option value="Other">Other</option>
+                {SESSION_TYPES.map((type) => (
+                  <option value={type} key={type}>{type}</option>
+                ))}
               </select>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700">Date</label>
               <input
                 type="date"
-                name="date"
                 required
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm px-3 py-2 border"
-                value={formData.date}
-                onChange={handleChange}
+                value={createForm.date}
+                onChange={(e) => updateCreateForm("date", e.target.value)}
               />
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-4">
+
+          <div>
             <div>
-              <label className="block text-sm font-medium text-gray-700">Time (e.g., 05.30 PM)</label>
+              <label className="block text-sm font-medium text-gray-700">Time</label>
               <input
-                type="text"
-                name="time"
+                type="time"
                 required
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm px-3 py-2 border"
-                placeholder="05.30 PM"
-                value={formData.time}
-                onChange={handleChange}
+                value={createForm.timeInput}
+                onChange={(e) => updateCreateForm("timeInput", e.target.value)}
               />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Repeat</label>
-              <select
-                name="repeatType"
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm px-3 py-2 border"
-                value={formData.repeatType}
-                onChange={handleChange}
-              >
-                <option value="Does not repeat">Does not repeat</option>
-                <option value="Every day">Every day</option>
-                <option value="Every week">Every week</option>
-                <option value="Every month">Every month</option>
-                <option value="Every year">Every year</option>
-                <option value="Custom">Custom</option>
-              </select>
+              <p className="text-xs text-gray-500 mt-1">Stored as {from24HourToDotMeridiem(createForm.timeInput) || "HH.MM AM/PM"}</p>
             </div>
           </div>
-          {formData.repeatType === "Custom" && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Custom Repeat Formula</label>
-              <input
-                type="text"
-                name="customRepeat"
-                required
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm px-3 py-2 border"
-                placeholder="e.g. Every 2 weeks on Tuesday"
-                value={formData.customRepeat}
-                onChange={handleChange}
-              />
-            </div>
-          )}
+
           <div>
             <label className="block text-sm font-medium text-gray-700">Description</label>
             <textarea
-              name="description"
               required
               rows={3}
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm px-3 py-2 border"
               placeholder="Additional details..."
-              value={formData.description}
-              onChange={handleChange}
+              value={createForm.description}
+              onChange={(e) => updateCreateForm("description", e.target.value)}
             />
           </div>
           <div className="flex justify-end pt-4">
             <button
               type="button"
-              onClick={() => setIsModalOpen(false)}
+              onClick={() => {
+                setIsCreateModalOpen(false);
+                resetCreateForm();
+              }}
               className="mr-3 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 border border-gray-300 rounded-md"
             >
               Cancel
             </button>
             <button
               type="submit"
+              disabled={submitting}
               className="bg-primary-900 text-white px-4 py-2 text-sm font-medium hover:bg-slate-800 rounded-md"
             >
-              Create Session
+              {submitting ? "Creating..." : "Create Session"}
             </button>
           </div>
         </form>
+      </Modal>
+
+      <Modal
+        title={isEditing ? "Edit Study Session" : "Session Details"}
+        activeModal={isDetailModalOpen}
+        onClose={() => {
+          setIsDetailModalOpen(false);
+          setSelectedSession(null);
+          setIsEditing(false);
+        }}
+      >
+        {detailLoading && <p className="text-secondary-600">Loading session details...</p>}
+
+        {!detailLoading && selectedSession && !isEditing && (
+          <div className="space-y-4 text-secondary-700">
+            <div>
+              <p className="text-xs uppercase text-gray-500">Subject Code</p>
+              <p className="font-semibold mt-1">{selectedSession.subjectCode}</p>
+            </div>
+            <div>
+              <p className="text-xs uppercase text-gray-500">Type</p>
+              <p className="font-semibold mt-1">{selectedSession.type}</p>
+            </div>
+            <div>
+              <p className="text-xs uppercase text-gray-500">Topic</p>
+              <p className="font-semibold mt-1">{selectedSession.topic}</p>
+            </div>
+            <div>
+              <p className="text-xs uppercase text-gray-500">Description</p>
+              <p className="mt-1 leading-6">{selectedSession.description}</p>
+            </div>
+            <div>
+              <p className="text-xs uppercase text-gray-500">Date</p>
+              <p className="mt-1 font-semibold">{formatFullDate(selectedSession.date)}</p>
+            </div>
+            <div>
+              <p className="text-xs uppercase text-gray-500">Time</p>
+              <p className="mt-1 font-semibold">{selectedSession.time}</p>
+            </div>
+
+            <div className="pt-4 flex justify-end gap-3">
+              <button
+                type="button"
+                className="bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 border border-gray-300 rounded-md"
+                onClick={() => {
+                  setIsDetailModalOpen(false);
+                  setSelectedSession(null);
+                  setIsEditing(false);
+                }}
+              >
+                Close
+              </button>
+
+              {isAdmin && (
+                <button
+                  type="button"
+                  className="bg-primary-900 text-white px-4 py-2 text-sm font-medium hover:bg-slate-800 rounded-md"
+                  onClick={() => setIsEditing(true)}
+                >
+                  Edit
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+
+        {!detailLoading && selectedSession && isEditing && (
+          <form onSubmit={handleUpdateSession} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Subject Code</label>
+              <input
+                type="text"
+                required
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm px-3 py-2 border"
+                value={editForm.subjectCode}
+                onChange={(e) => updateEditForm("subjectCode", e.target.value)}
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Type</label>
+                <select
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm px-3 py-2 border"
+                  value={editForm.type}
+                  onChange={(e) => updateEditForm("type", e.target.value)}
+                >
+                  {SESSION_TYPES.map((type) => (
+                    <option value={type} key={type}>{type}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Date</label>
+                <input
+                  type="date"
+                  required
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm px-3 py-2 border"
+                  value={editForm.date}
+                  onChange={(e) => updateEditForm("date", e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Topic</label>
+                <input
+                  type="text"
+                  required
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm px-3 py-2 border"
+                  value={editForm.topic}
+                  onChange={(e) => updateEditForm("topic", e.target.value)}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Time</label>
+                <input
+                  type="time"
+                  required
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm px-3 py-2 border"
+                  value={editForm.timeInput}
+                  onChange={(e) => updateEditForm("timeInput", e.target.value)}
+                />
+                <p className="text-xs text-gray-500 mt-1">Stored as {from24HourToDotMeridiem(editForm.timeInput) || "HH.MM AM/PM"}</p>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Description</label>
+              <textarea
+                required
+                rows={3}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm px-3 py-2 border"
+                value={editForm.description}
+                onChange={(e) => updateEditForm("description", e.target.value)}
+              />
+            </div>
+
+            <div className="pt-4 flex justify-between items-center">
+              <button
+                type="button"
+                onClick={handleDeleteSession}
+                disabled={deleting}
+                className="bg-danger-500 text-white px-4 py-2 text-sm font-medium rounded-md hover:bg-danger-600"
+              >
+                {deleting ? "Deleting..." : "Delete"}
+              </button>
+
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setIsEditing(false)}
+                  className="bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 border border-gray-300 rounded-md"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="bg-primary-900 text-white px-4 py-2 text-sm font-medium hover:bg-slate-800 rounded-md"
+                >
+                  {submitting ? "Saving..." : "Save Changes"}
+                </button>
+              </div>
+            </div>
+          </form>
+        )}
       </Modal>
     </div>
   );
