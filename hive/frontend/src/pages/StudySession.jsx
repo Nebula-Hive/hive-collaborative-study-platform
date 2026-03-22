@@ -754,28 +754,43 @@ export default function StudySessionCalendar({ isUpcomingTasks = true }) {
               <p className="mt-1 font-semibold">{selectedSession.time}</p>
             </div>
 
-            <div className="pt-4 flex justify-end gap-3">
-              <button
-                type="button"
-                className="bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 border border-gray-300 rounded-md"
-                onClick={() => {
-                  setIsDetailModalOpen(false);
-                  setSelectedSession(null);
-                  setIsEditing(false);
-                }}
-              >
-                Close
-              </button>
+            <div className="pt-4 flex justify-between items-center gap-3">
+              <div>
+                {isAdmin && (
+                  <button
+                    type="button"
+                    disabled={deleting}
+                    className="bg-danger-500 text-white px-4 py-2 text-sm font-medium rounded-md hover:bg-danger-600"
+                    onClick={handleDeleteSession}
+                  >
+                    {deleting ? "Deleting..." : "Delete"}
+                  </button>
+                )}
+              </div>
 
-              {isAdmin && (
+              <div className="flex gap-3">
                 <button
                   type="button"
-                  className="bg-primary-900 text-white px-4 py-2 text-sm font-medium hover:bg-slate-800 rounded-md"
-                  onClick={() => setIsEditing(true)}
+                  className="bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 border border-gray-300 rounded-md"
+                  onClick={() => {
+                    setIsDetailModalOpen(false);
+                    setSelectedSession(null);
+                    setIsEditing(false);
+                  }}
                 >
-                  Edit
+                  Close
                 </button>
-              )}
+
+                {isAdmin && (
+                  <button
+                    type="button"
+                    className="bg-primary-900 text-white px-4 py-2 text-sm font-medium hover:bg-slate-800 rounded-md"
+                    onClick={() => setIsEditing(true)}
+                  >
+                    Edit
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         )}
