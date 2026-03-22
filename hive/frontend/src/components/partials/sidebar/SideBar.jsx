@@ -59,11 +59,8 @@ const AppSidebar = () => {
   const { isExpanded, toggleSidebar, isMobileOpen } = useSidebar();
   const location = useLocation();
   const [openSubmenu, setOpenSubmenu] = useState(null);
-  const { authData } = useAuth();
-
-  authData.role = "ADMIN"; // For testing purposes, set role to ADMIN
-
-  const { role } = useAuth(); // ✅ from firebase context
+  const { authData, role } = useAuth();
+  const userRole = authData?.role || role || "student";
 
   return (
     <aside
@@ -97,7 +94,7 @@ const AppSidebar = () => {
       <nav className="mt-4 px-4">
         <ul className="space-y-3">
           {navItems
-            .filter((item) => item.allowed.includes(role)) // ✅
+            .filter((item) => item.allowed.includes(userRole)) // ✅
             .map((item, index) => (
               <li key={index}>
                 {item.subItems ? (
