@@ -54,6 +54,7 @@ export default function App() {
             <Route path="admin" element={<AdminDashboard />} />
             <Route path="admin/users" element={<UserManagement />} />
             <Route path="admin/groups" element={<GroupManagement />} />
+            <Route path="admin/session" element={<StudySession />} />
 
             <Route path="superadmin" element={<SuperAdminDashboard />} />
             <Route path="superadmin/users" element={<UserManagementSuperAdmin />} />
