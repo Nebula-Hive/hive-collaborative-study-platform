@@ -11,7 +11,7 @@ import ResourceCard from "../components/ui/ResourceCard";
 export default function Resources() {
   const { subjectId } = useParams();
   const navigate = useNavigate();
-  const { role } = useAuth();
+  const { role, viewMode } = useAuth();
 
   const [activeTab, setActiveTab] = useState("papers");
   const [dbResources, setDbResources] = useState({ past_papers: [], notes: [] });
@@ -118,7 +118,7 @@ export default function Resources() {
         </div>
 
         {/* Admin / Superadmin Upload Buttons — contextual per tab */}
-        {(role === "superadmin" || role === "admin") && activeTab === "papers" && (
+        {(viewMode === "superadmin" || viewMode === "admin") && activeTab === "papers" && (
           <button
             onClick={() => { setResourceType("past_paper"); setIsModalOpen(true); }}
             className="mb-2 bg-primary-900 text-white px-4 py-2 rounded-md hover:bg-slate-800 transition shadow-sm text-sm font-medium"
@@ -126,7 +126,7 @@ export default function Resources() {
             + Add Past Paper
           </button>
         )}
-        {(role === "superadmin" || role === "admin") && activeTab === "notes" && (
+        {(viewMode === "superadmin" || viewMode === "admin") && activeTab === "notes" && (
           <button
             onClick={() => { setResourceType("note"); setIsModalOpen(true); }}
             className="mb-2 bg-primary-900 text-white px-4 py-2 rounded-md hover:bg-slate-800 transition shadow-sm text-sm font-medium"
