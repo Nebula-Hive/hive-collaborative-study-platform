@@ -7,6 +7,7 @@ import Dashboard from "./pages/Dashboard";
 import Chat from "./pages/Chat";
 import Resources from "./pages/Resources";
 import Subjects from "./pages/Subjects";
+import ResourceStats from "./pages/ResourceStats";
 import AISupport from "./pages/AISupport";
 import FlashCards from "./pages/FlashCards";
 import ProgressTracker from "./pages/ProgressTracker";
@@ -45,7 +46,13 @@ export default function App() {
             <Route index element={<Dashboard />} />
             <Route path="chat" element={<Chat />} />
             <Route path="resources" element={<Subjects />} />
-            <Route path="resources/:subjectId" element={<Resources />} />
+            <Route path="resources/subjects/:subjectId" element={<Resources />} />
+            <Route
+              path="resources/stats"
+              element={<ProtectedRoute allowedRoles={["admin", "superadmin"]} />}
+            >
+              <Route index element={<ResourceStats />} />
+            </Route>
             <Route path="ai" element={<AISupport />} />
             <Route path="flashcards" element={<FlashCards />} />
             <Route path="progress" element={<ProgressTracker />} />
