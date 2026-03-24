@@ -30,3 +30,17 @@ export {
   deleteSession,
 
 } from "./api";
+
+export {
+  createSubject,
+  getAllSubjects,
+  getSubjectByCode,
+  updateSubject,
+  deleteSubject,
+  uploadResource,
+  getResourcesBySubject,
+  getResourceById,
+  getDownloadUrl,
+  deleteResource,
+  getResourceStats,
+} from "./resourceService";
