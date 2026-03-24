@@ -139,6 +139,13 @@ const AppSidebar = () => {
     }
   };
 
+  const isItemActive = (path) => {
+    if (path === "/resources") {
+      return location.pathname === "/resources" || location.pathname.startsWith("/resources/");
+    }
+    return location.pathname === path;
+  };
+
   return (
     <aside
       className={`fixed top-0 left-0 h-screen bg-white text-secondary-500 transition-all border duration-300 ease-in-out border-gray-200 z-50
@@ -199,7 +206,7 @@ const AppSidebar = () => {
                   // Normal Navigation Link
                   <Link
                     to={item.path}
-                    className={`flex items-center px-4 py-3 rounded-md transition ${!isExpanded ? "justify-center" : ""} ${location.pathname === item.path
+                    className={`flex items-center px-4 py-3 rounded-md transition ${!isExpanded ? "justify-center" : ""} ${isItemActive(item.path)
                       ? "bg-primary-300 font-semibold text-primary-900"
                       : "bg-primary-50 hover:bg-primary-100"
                       }`}
