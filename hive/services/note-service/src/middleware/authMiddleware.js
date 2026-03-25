@@ -1,3 +1,4 @@
+require('dotenv').config();
 const admin = require('firebase-admin');
 
 // Initialize Firebase Admin if not already initialized (expects env vars)
