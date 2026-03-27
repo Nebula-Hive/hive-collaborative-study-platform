@@ -4,21 +4,17 @@ Models module — Pydantic request/response schemas.
 from app.models.schemas import (
     IngestRequest,
     IngestResponse,
-    ChatRequest,
-    ChatResponse,
+    QueryRequest,
+    QueryResponse,
     ChatMessage,
-    DocumentInfo,
-    DocumentListResponse,
-    ErrorResponse,
+    DeleteRequest,
 )
 
 __all__ = [
     "IngestRequest",
     "IngestResponse",
-    "ChatRequest",
-    "ChatResponse",
+    "QueryRequest",
+    "QueryResponse",
     "ChatMessage",
-    "DocumentInfo",
-    "DocumentListResponse",
-    "ErrorResponse",
+    "DeleteRequest",
 ]
