@@ -5,7 +5,10 @@ from urllib.request import urlopen
 
 import boto3
 from botocore.exceptions import BotoCoreError, ClientError
-from langchain.text_splitter import RecursiveCharacterTextSplitter
+try:
+    from langchain.text_splitter import RecursiveCharacterTextSplitter
+except ImportError:
+    from langchain_text_splitters import RecursiveCharacterTextSplitter
 from pypdf import PdfReader
 
 from app.config.settings import settings
