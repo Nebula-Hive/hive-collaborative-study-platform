@@ -165,7 +165,7 @@ const uploadResource = async (req, res) => {
       const ragRes = await axios.post(
         `${RAG_SERVICE_URL}/api/rag/ingest`,
         ragPayload,
-        { timeout: 10000 }
+        { timeout: 120000 }
       );
 
       if (ragRes.status === 200 || ragRes.status === 202) {
@@ -275,7 +275,7 @@ const deleteResource = async (req, res) => {
     try {
       await axios.delete(
         `${RAG_SERVICE_URL}/api/rag/documents/${resource.resourceId}`,
-        { timeout: 5000 }
+        { timeout: 30000 }
       );
       console.log(`[RAG] Embeddings deletion requested for ${resource.resourceId}`);
     } catch (ragErr) {
