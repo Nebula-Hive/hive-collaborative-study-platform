@@ -166,7 +166,7 @@ function SessionToolbar({ label, onNavigate, onView, view }) {
   );
 }
 
-export default function StudySessionCalendar({ isUpcomingTasks = true }) {
+export default function StudySessionCalendar({ isUpcomingTasks = true, hideListView = false }) {
   const { viewMode } = useAuth();
   const isAdmin = viewMode === "admin" || viewMode === "superadmin";
 
@@ -526,7 +526,7 @@ export default function StudySessionCalendar({ isUpcomingTasks = true }) {
             </>
           )}
 
-          {!isAdmin && (
+          {!isAdmin && !hideListView && (
             <div className="mt-6 rounded-xl border border-gray-200 overflow-hidden">
               <div className="bg-primary-50 px-4 py-3 font-semibold text-secondary-700">
                 Session List View
