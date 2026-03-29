@@ -13,7 +13,6 @@ const BATCH_CARD_COLORS = [
 
 const GroupsManagementSuperAdmin = () => {
   const [batches, setBatches] = useState([]);
-  const [expandedBatch, setExpandedBatch] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -69,9 +68,7 @@ const GroupsManagementSuperAdmin = () => {
     loadBatches();
   }, []);
 
-  const toggleExpand = (year) => {
-    setExpandedBatch(expandedBatch === year ? null : year);
-  };
+
 
   if (loading) {
     return (
@@ -101,7 +98,7 @@ const GroupsManagementSuperAdmin = () => {
           {batches.map((batch, index) => {
             const color =
               BATCH_CARD_COLORS[index % BATCH_CARD_COLORS.length];
-            const isExpanded = expandedBatch === batch.year;
+
 
             return (
               <div
@@ -109,10 +106,8 @@ const GroupsManagementSuperAdmin = () => {
                 className="bg-white rounded-xl border shadow-sm overflow-hidden transition-all duration-200 hover:shadow-md"
                 style={{ borderColor: color.border }}
               >
-                {/* Card Header */}
-                <button
-                  onClick={() => toggleExpand(batch.year)}
-                  className="w-full text-left p-5"
+                <div
+                  className="p-5"
                 >
                   <div className="flex items-center gap-4">
                     <div
@@ -133,10 +128,7 @@ const GroupsManagementSuperAdmin = () => {
                         {batch.totalCount} member{batch.totalCount !== 1 ? "s" : ""}
                       </p>
                     </div>
-                    <Icon
-                      icon={`heroicons-outline:chevron-${isExpanded ? "up" : "down"}`}
-                      className="w-5 h-5 text-secondary-400"
-                    />
+
                   </div>
 
                   {/* Stats Row */}
@@ -160,49 +152,7 @@ const GroupsManagementSuperAdmin = () => {
                       </p>
                     </div>
                   </div>
-                </button>
-
-                {/* Expanded Member List */}
-                {isExpanded && (
-                  <div className="border-t border-gray-100 px-5 py-4 max-h-64 overflow-y-auto">
-                    {batch.admins.length > 0 && (
-                      <div className="mb-3">
-                        <p className="text-xs font-semibold text-secondary-500 uppercase mb-2">
-                          Admins
-                        </p>
-                        {batch.admins.map((admin) => (
-                          <div
-                            key={admin._id || admin.studentNumber}
-                            className="flex items-center gap-3 py-2"
-                          >
-                            <div className="w-7 h-7 rounded-full bg-purple-100 flex items-center justify-center flex-shrink-0">
-                              <span className="text-xs font-bold text-purple-700">
-                                {(admin.name || "?")[0].toUpperCase()}
-                              </span>
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium text-secondary-800 truncate">
-                                {admin.name}
-                              </p>
-                              <p className="text-xs text-secondary-400 truncate">
-                                {admin.studentNumber || admin.email}
-                              </p>
-                            </div>
-                            <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full font-medium">
-                              Admin
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-
-                    {batch.admins.length === 0 && (
-                      <p className="text-sm text-secondary-400 italic">
-                        No admins in this batch.
-                      </p>
-                    )}
-                  </div>
-                )}
+                </div>
               </div>
             );
           })}
