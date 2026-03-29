@@ -1,4 +1,5 @@
 import logging
+import re
 import time
 from typing import List
 
@@ -36,6 +37,18 @@ class EmbeddingService:
             " 404 ",
         ]
         return any(marker in error_text for marker in markers)
+
+    @staticmethod
+    def _is_rate_limit_error(exc: Exception) -> bool:
+        error_text = str(exc).lower()
+        return "429" in error_text or "resource_exhausted" in error_text or "quota" in error_text
+
+    @staticmethod
+    def _extract_retry_delay(exc: Exception) -> float:
+        match = re.search(r"retry in ([\d.]+)s", str(exc))
+        if match:
+            return min(float(match.group(1)) + 1, 60.0)
+        return 30.0
 
     def _candidate_models(self) -> List[str]:
         candidates = [self.model, *self._fallback_models]
@@ -81,7 +94,7 @@ class EmbeddingService:
         response = self._embed_with_fallback(text=text, task_type="retrieval_query")
         return self._extract_embedding(response)
 
-    def _embed_with_fallback(self, text: str, task_type: str) -> dict:
+    def _embed_with_fallback(self, text: str, task_type: str, max_retries: int = 3) -> dict:
         attempted_models: List[str] = []
         first_failure: Exception | None = None
         candidate_models = self._candidate_models()
@@ -93,30 +106,45 @@ class EmbeddingService:
             idx += 1
 
             attempted_models.append(candidate)
-            try:
-                response = genai.embed_content(model=candidate, content=text, task_type=task_type)
-                if candidate != self.model:
-                    logger.warning(
-                        "Embedding model %s unavailable; switched to %s",
-                        self.model,
-                        candidate,
-                    )
-                    self.model = candidate
-                return response
-            except Exception as exc:
-                if first_failure is None:
-                    first_failure = exc
-                if not self._is_model_unavailable_error(exc):
-                    raise
-                logger.warning("Embedding model %s unavailable: %s", candidate, exc)
+            for retry in range(max_retries + 1):
+                try:
+                    response = genai.embed_content(model=candidate, content=text, task_type=task_type)
+                    if candidate != self.model:
+                        logger.warning(
+                            "Embedding model %s unavailable; switched to %s",
+                            self.model,
+                            candidate,
+                        )
+                        self.model = candidate
+                    return response
+                except Exception as exc:
+                    if first_failure is None:
+                        first_failure = exc
 
-                if not discovery_attempted:
-                    discovery_attempted = True
-                    discovered = self._discover_embedding_models()
-                    for discovered_model in discovered:
-                        if discovered_model not in candidate_models:
-                            candidate_models.append(discovered_model)
-                continue
+                    if self._is_rate_limit_error(exc):
+                        if retry < max_retries:
+                            delay = self._extract_retry_delay(exc)
+                            logger.warning(
+                                "Rate limited on %s (attempt %s/%s), waiting %.1fs...",
+                                candidate, retry + 1, max_retries, delay,
+                            )
+                            time.sleep(delay)
+                            continue
+                        else:
+                            raise
+
+                    if not self._is_model_unavailable_error(exc):
+                        raise
+                    logger.warning("Embedding model %s unavailable: %s", candidate, exc)
+                    break  # try next model
+
+            if not discovery_attempted:
+                discovery_attempted = True
+                discovered = self._discover_embedding_models()
+                for discovered_model in discovered:
+                    if discovered_model not in candidate_models:
+                        candidate_models.append(discovered_model)
+            continue
 
         raise RuntimeError(
             "No supported embedding model available. Attempted: "

@@ -54,10 +54,12 @@ export default function SubjectAIChat({ subjectName = "this subject", subjectCod
       console.error("RAG query error:", error);
 
       let errorMsg = "Sorry, I encountered an error. Please try again.";
-      if (error.response?.status === 500) {
-        errorMsg = "The AI service is temporarily unavailable. Please try again in a moment.";
+      if (error.response?.status === 429) {
+        errorMsg = "⏳ AI quota limit reached. Please wait about a minute and try again.";
+      } else if (error.response?.status === 500) {
+        errorMsg = "The AI service encountered an error. Please try again in a moment.";
       } else if (!error.response) {
-        errorMsg = "Unable to reach the AI service. Make sure the RAG service is running.";
+        errorMsg = "Unable to reach the AI service. Make sure the RAG service is running on port 8000.";
       }
 
       setMessages((prev) => [

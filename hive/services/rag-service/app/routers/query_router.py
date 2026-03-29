@@ -36,6 +36,10 @@ def query_subject_assistant(request: QueryRequest):
         pipeline = RetrievalPipeline()
         return pipeline.run(request=request, subject_name=subject_name)
     except Exception as exc:
+        error_msg = str(exc).lower()
+        if "rate_limited" in error_msg or "quota" in error_msg or "429" in error_msg:
+            logger.warning("Query rate limited: %s", exc)
+            raise HTTPException(status_code=429, detail="AI quota exceeded. Please wait a minute and try again.") from exc
         logger.exception("Query failed")
         raise HTTPException(status_code=500, detail=str(exc)) from exc
 

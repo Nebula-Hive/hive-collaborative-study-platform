@@ -1,4 +1,6 @@
 import logging
+import re
+import time
 from typing import List
 
 import google.generativeai as genai
@@ -7,6 +9,18 @@ from app.config.settings import settings
 from app.models.schemas import ChatMessage
 
 logger = logging.getLogger("rag-service.gemini-service")
+
+
+def _is_rate_limit_error(exc: Exception) -> bool:
+    error_text = str(exc).lower()
+    return "429" in error_text or "resource_exhausted" in error_text or "quota" in error_text
+
+
+def _extract_retry_delay(exc: Exception) -> float:
+    match = re.search(r"retry in ([\d.]+)s", str(exc))
+    if match:
+        return min(float(match.group(1)) + 1, 60.0)
+    return 30.0
 
 
 class GeminiService:
@@ -59,13 +73,28 @@ class GeminiService:
             "ANSWER:"
         )
 
-    def generate_response(self, prompt: str) -> str:
-        try:
-            response = self.model.generate_content(prompt)
-            return (response.text or "").strip()
-        except Exception as exc:
-            logger.error("Gemini API error: %s", exc)
-            raise RuntimeError("Failed to generate response from Gemini") from exc
+    def generate_response(self, prompt: str, max_retries: int = 3) -> str:
+        for attempt in range(max_retries + 1):
+            try:
+                response = self.model.generate_content(prompt)
+                return (response.text or "").strip()
+            except Exception as exc:
+                if _is_rate_limit_error(exc):
+                    if attempt < max_retries:
+                        delay = _extract_retry_delay(exc)
+                        logger.warning(
+                            "Gemini rate limited (attempt %s/%s), waiting %.1fs...",
+                            attempt + 1, max_retries, delay,
+                        )
+                        time.sleep(delay)
+                        continue
+                    logger.error("Gemini API rate limit exhausted after %s retries", max_retries)
+                    raise RuntimeError(
+                        "rate_limited: Gemini API quota exhausted. Please try again in a minute."
+                    ) from exc
+                logger.error("Gemini API error: %s", exc)
+                raise RuntimeError("Failed to generate response from Gemini") from exc
+        raise RuntimeError("Failed to generate response from Gemini")
 
     def is_out_of_syllabus(self, chunks: List[dict]) -> bool:
         if not chunks:
