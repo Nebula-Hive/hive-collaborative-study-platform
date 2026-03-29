@@ -185,6 +185,7 @@ const startVoice = () => {
     }
 
     setIsEditMode(false);
+    setSelectedNote(null);
   };
 
   const cancelEdit = () => {
