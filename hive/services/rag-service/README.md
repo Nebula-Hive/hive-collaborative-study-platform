@@ -22,7 +22,7 @@ This service powers the "AI Support" chatbot feature inside each subject on the 
 |-----------|-----------|
 | Framework | Python FastAPI |
 | LLM | Google Gemini (`gemini-2.0-flash`) |
-| Embeddings | Gemini `embedding-001` |
+| Embeddings | Gemini `text-embedding-004` |
 | Vector DB | PostgreSQL + pgvector |
 | Orchestration | LangChain |
 | PDF Processing | PyPDF2 |

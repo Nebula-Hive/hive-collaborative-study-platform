@@ -13,7 +13,52 @@ class EmbeddingService:
     def __init__(self) -> None:
         genai.configure(api_key=settings.gemini_api_key)
         self.model = settings.embedding_model
-        self._fallback_models = ["models/text-embedding-004", "models/embedding-001"]
+        self._fallback_models = [
+            "models/gemini-embedding-001",
+            "gemini-embedding-001",
+            "models/gemini-embedding-2-preview",
+            "gemini-embedding-2-preview",
+            "models/text-embedding-004",
+            "text-embedding-004",
+            "models/embedding-001",
+            "embedding-001",
+        ]
+
+    @staticmethod
+    def _is_model_unavailable_error(exc: Exception) -> bool:
+        error_text = str(exc).lower()
+        markers = [
+            "not found",
+            "not supported for embedcontent",
+            "unsupported model",
+            "model not found",
+            "statuscode.not_found",
+            " 404 ",
+        ]
+        return any(marker in error_text for marker in markers)
+
+    def _candidate_models(self) -> List[str]:
+        candidates = [self.model, *self._fallback_models]
+        seen = set()
+        ordered_candidates: List[str] = []
+        for candidate in candidates:
+            if candidate and candidate not in seen:
+                seen.add(candidate)
+                ordered_candidates.append(candidate)
+        return ordered_candidates
+
+    def _discover_embedding_models(self) -> List[str]:
+        discovered: List[str] = []
+        try:
+            for model in genai.list_models():
+                methods = getattr(model, "supported_generation_methods", None) or []
+                if "embedContent" in methods and getattr(model, "name", None):
+                    discovered.append(model.name)
+            if discovered:
+                logger.info("Discovered %s embed-capable model(s) from Gemini API", len(discovered))
+        except Exception as exc:
+            logger.warning("Unable to discover embedding models via ListModels: %s", exc)
+        return discovered
 
     @staticmethod
     def _extract_embedding(response: dict) -> List[float]:
@@ -37,30 +82,46 @@ class EmbeddingService:
         return self._extract_embedding(response)
 
     def _embed_with_fallback(self, text: str, task_type: str) -> dict:
-        try:
-            return genai.embed_content(model=self.model, content=text, task_type=task_type)
-        except Exception as exc:
-            error_text = str(exc).lower()
-            model_unavailable = "not found" in error_text or "not supported for embedcontent" in error_text
-            if not model_unavailable:
-                raise
+        attempted_models: List[str] = []
+        first_failure: Exception | None = None
+        candidate_models = self._candidate_models()
+        discovery_attempted = False
 
-            for candidate in self._fallback_models:
-                if candidate == self.model:
-                    continue
-                try:
-                    response = genai.embed_content(model=candidate, content=text, task_type=task_type)
+        idx = 0
+        while idx < len(candidate_models):
+            candidate = candidate_models[idx]
+            idx += 1
+
+            attempted_models.append(candidate)
+            try:
+                response = genai.embed_content(model=candidate, content=text, task_type=task_type)
+                if candidate != self.model:
                     logger.warning(
                         "Embedding model %s unavailable; switched to %s",
                         self.model,
                         candidate,
                     )
                     self.model = candidate
-                    return response
-                except Exception:
-                    continue
+                return response
+            except Exception as exc:
+                if first_failure is None:
+                    first_failure = exc
+                if not self._is_model_unavailable_error(exc):
+                    raise
+                logger.warning("Embedding model %s unavailable: %s", candidate, exc)
 
-            raise
+                if not discovery_attempted:
+                    discovery_attempted = True
+                    discovered = self._discover_embedding_models()
+                    for discovered_model in discovered:
+                        if discovered_model not in candidate_models:
+                            candidate_models.append(discovered_model)
+                continue
+
+        raise RuntimeError(
+            "No supported embedding model available. Attempted: "
+            + ", ".join(attempted_models)
+        ) from first_failure
 
     def create_embeddings_batch(self, texts: List[str]) -> List[List[float]]:
         all_embeddings: List[List[float]] = []
