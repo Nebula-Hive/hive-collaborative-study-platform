@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { FaSearch, FaPaperPlane, FaEllipsisV } from "react-icons/fa";
 import { AiOutlineClose } from "react-icons/ai";
 import { HiDocumentText } from "react-icons/hi";
@@ -14,10 +14,9 @@ export default function NotesPage() {
   const [selectedNote, setSelectedNote] = useState(null);
   const [editText, setEditText] = useState("");
   const [editTopic, setEditTopic] = useState("");
+  const [isEditMode, setIsEditMode] = useState(false);
   const [newTopic, setNewTopic] = useState("");
   const [showMenuId, setShowMenuId] = useState(null);
-  const [showEditPopup, setShowEditPopup] = useState(false);
-  const [editPopupText, setEditPopupText] = useState("");
   const [text, setText] = useState("");
   const [isListening, setIsListening] = useState(false);
 
@@ -36,24 +35,18 @@ export default function NotesPage() {
       .includes(searchText.toLowerCase())
   );
 
-  // Create axios instance with proper headers
-  const apiRef = useRef(null);
-  
-  useEffect(() => {
-    if (token) {
-      apiRef.current = axios.create({
-        baseURL: "http://localhost:3004/api/notes",
-        headers: { Authorization: `Bearer ${token}` },
-      });
-    }
+  const api = useMemo(() => {
+    if (!token) return null;
+    return axios.create({
+      baseURL: "http://localhost:3004/api/notes",
+      headers: { Authorization: `Bearer ${token}` },
+    });
   }, [token]);
-
-  const api = apiRef.current;
 
   // Fetch notes when user loads
   useEffect(() => {
-    if (!loading && user) fetchNotes();
-  }, [loading, user, token]);
+    if (!loading && user && api) fetchNotes();
+  }, [loading, user, api]);
 
   useEffect(() => {
     if (!selectedNote) return;
@@ -79,6 +72,7 @@ export default function NotesPage() {
 
   const selectNote = (note) => {
     setSelectedNote(note);
+    setIsEditMode(false);
   };
 
   // Start voice recognition
@@ -140,8 +134,10 @@ const startVoice = () => {
       setText("");
       setNewTopic("");
     } catch (err) {
+      const backendMessage = err.response?.data?.message;
+      const status = err.response?.status;
       console.error("Error creating note:", err.response?.data || err.message);
-      alert("Failed to create note. Check console for details.");
+      alert(backendMessage || `Failed to create note${status ? ` (HTTP ${status})` : ""}`);
     }
   };
 
@@ -159,11 +155,31 @@ const startVoice = () => {
     }
   };
 
-  const saveTopic = async () => {
+  const saveCurrentNote = async () => {
     if (!selectedNote) return;
     const trimmedTopic = editTopic.trim();
-    if (!trimmedTopic) return;
-    await updateNote(selectedNote._id, { title: trimmedTopic });
+    const payload = {};
+
+    if (trimmedTopic && trimmedTopic !== (selectedNote.title || "")) {
+      payload.title = trimmedTopic;
+    }
+
+    if (editText !== (selectedNote.content || "")) {
+      payload.content = editText;
+    }
+
+    if (Object.keys(payload).length > 0) {
+      await updateNote(selectedNote._id, payload);
+    }
+
+    setIsEditMode(false);
+  };
+
+  const cancelEdit = () => {
+    if (!selectedNote) return;
+    setEditText(selectedNote.content || "");
+    setEditTopic(selectedNote.title || getAutoTopic(selectedNote.content));
+    setIsEditMode(false);
   };
 
   const deleteNote = async (id) => {
@@ -336,74 +352,51 @@ useEffect(() => {
 
       {/* Main area */}
       <div className="flex-1 relative flex flex-col p-6">
-       
-{showEditPopup && (
-  <div className="fixed inset-0 flex items-center justify-center z-50 bg-transparent bg-opacity-30">
-    <div className="bg-white rounded-lg shadow-lg w-[500px] p-6 border">
-      <h2 className="text-lg font-semibold mb-3">Edit Note</h2>
-
-      <textarea
-        value={editPopupText}
-        onChange={(e) => setEditPopupText(e.target.value)}
-        className="w-full h-48 p-3 border rounded resize-none"
-      />
-
-      <div className="mt-4 flex justify-end gap-3">
-        <button
-          onClick={() => setShowEditPopup(false)}
-          className="px-4 py-2 border rounded hover:bg-gray-100"
-        >
-          Cancel
-        </button>
-        <button
-          onClick={() => {
-            updateNote(selectedNote._id, { content: editPopupText });
-            setEditText(editPopupText);
-            setShowEditPopup(false);
-          }}
-          className="px-4 py-2 bg-primary-500 text-white rounded hover:bg-primary-700"
-        >
-          Save
-        </button>
-      </div>
-    </div>
-  </div>
-)}
 
         {selectedNote ? (
           <>
+          <div className="flex justify-end gap-2 mb-2">
+            {!isEditMode ? (
+              <button
+                className="px-4 py-2 bg-primary-500 text-white rounded hover:bg-primary-700"
+                onClick={() => setIsEditMode(true)}
+              >
+                Edit
+              </button>
+            ) : (
+              <>
+                <button
+                  className="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300"
+                  onClick={cancelEdit}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+                  onClick={saveCurrentNote}
+                >
+                  Save
+                </button>
+              </>
+            )}
+          </div>
           <div className="mb-3">
             <label className="block text-sm text-gray-600 mb-1">Topic</label>
-            <div className="flex items-center gap-3">
-              <input
-                type="text"
-                value={editTopic}
-                onChange={(e) => setEditTopic(e.target.value)}
-                onBlur={saveTopic}
-                className="w-full text-2xl font-semibold border border-gray-300 rounded px-3 py-2"
-              />
-              <button
-                className="px-3 py-2 bg-gray-100 rounded hover:bg-gray-200"
-                onClick={saveTopic}
-              >
-                Save Topic
-              </button>
-            </div>
+            <input
+              type="text"
+              value={editTopic}
+              onChange={(e) => setEditTopic(e.target.value)}
+              readOnly={!isEditMode}
+              className={`w-full text-2xl font-semibold border border-gray-300 rounded px-3 py-2 ${
+                isEditMode ? "bg-white" : "bg-gray-50"
+              }`}
+            />
           </div>
-          <button
-        className="absolute top-2 right-2 bg-primary-500 text-white px-3 py-1 rounded hover:bg-primary-700"
-        onClick={() => {
-          setEditPopupText(editText);
-          setShowEditPopup(true);
-        }}
-      >
-        Edit
-      </button>
           <textarea
             className="w-full flex-1 p-4 text-gray-900 bg-white rounded-md  resize-none overflow-auto"
             value={editText}
             onChange={(e) => setEditText(e.target.value)}
-            onBlur={() => updateNote(selectedNote._id, { content: editText })}
+            readOnly={!isEditMode}
             style={{ minHeight: "6rem", maxHeight: "70vh" }}
           />
           </>
