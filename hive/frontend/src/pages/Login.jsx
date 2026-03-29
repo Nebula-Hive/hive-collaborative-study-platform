@@ -22,7 +22,7 @@ const LoginValidationSchema = yup
 
 function Login() {
   const [loading, setLoading] = useState(false);
-  const { login } = useAuth();
+  const { login, role } = useAuth();
   const navigate = useNavigate();
 
   const {
@@ -41,13 +41,21 @@ function Login() {
   const onSubmit = async (data) => {
     setLoading(true);
     try {
-      await login({
+      const verifiedUser = await login({
         email: data.email,
         password: data.password,
       });
 
       Notification.success("Login successful!");
-      navigate("/");
+
+      const userRole = verifiedUser?.role || "student";
+      if (userRole === "admin") {
+        navigate("/admin");
+      } else if (userRole === "superadmin") {
+        navigate("/superadmin");
+      } else {
+        navigate("/");
+      }
     } catch (error) {
       Notification.error(error?.message || "Login failed!");
     } finally {
