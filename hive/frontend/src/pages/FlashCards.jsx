@@ -191,7 +191,7 @@ export default function FlashCards() {
       {/* Left Sidebar — My Cards */}
       <div className="w-[220px] min-w-[220px] border-r border-gray-200 bg-white flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between px-4 pt-4 pb-3">
+        <div className="flex items-center justify-between px-6 pt-5 pb-3">
           <h2 className="text-base font-semibold text-secondary-800">
             My Cards
           </h2>
@@ -208,7 +208,7 @@ export default function FlashCards() {
 
         {/* Search input */}
         {showSearch && (
-          <div className="px-4 pb-2">
+          <div className="px-6 pb-2">
             <input
               type="text"
               placeholder="Search decks..."
@@ -220,18 +220,18 @@ export default function FlashCards() {
         )}
 
         {/* Deck list */}
-        <div className="flex-1 overflow-y-auto px-2">
+        <div className="flex-1 overflow-y-auto px-6 space-y-2 pb-6 mt-1">
           {filteredDecks.map((deck) => (
             <div
               key={deck.id}
               onClick={() => handleSelectDeck(deck.id)}
-              className={`group w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-left transition text-sm cursor-pointer ${selectedDeckId === deck.id && !isCreating
-                ? "bg-primary-100 text-secondary-900 font-medium"
-                : "text-secondary-600 hover:bg-gray-50"
+              className={`group w-full flex items-center gap-3 px-3 py-3 rounded-lg text-left transition text-sm cursor-pointer ${selectedDeckId === deck.id && !isCreating
+                ? "bg-primary-100 text-secondary-900 font-medium shadow-sm"
+                : "text-secondary-600 hover:bg-gray-50 border border-transparent hover:border-gray-100"
                 }`}
             >
               <Icon
-                icon="heroicons-outline:clock"
+                icon="heroicons-outline:rectangle-stack"
                 className="w-4 h-4 shrink-0 text-secondary-400"
               />
               <span className="truncate flex-1">{deck.name}</span>
