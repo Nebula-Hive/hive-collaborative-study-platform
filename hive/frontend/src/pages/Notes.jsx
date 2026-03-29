@@ -254,7 +254,7 @@ useEffect(() => {
 }, []);
   return (
     <div className="h-screen bg-primary p-6 overflow-y-auto">
-      <div className="max-w-3xl">
+      <div className="w-full">
         <div className="flex justify-between items-center mb-4">
           <h1 className="font-semibold text-gray-700 text-3xl">My Notes</h1>
           <FaSearch
