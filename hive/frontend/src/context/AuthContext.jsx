@@ -114,8 +114,8 @@ export const AuthProvider = ({ children }) => {
   const login = async ({ email, password }) => {
     try {
       const credential = await signInWithEmailAndPassword(auth, email, password);
-      await syncSessionFromFirebaseUser(credential.user);
-      return credential.user;
+      const verifiedUser = await syncSessionFromFirebaseUser(credential.user);
+      return verifiedUser;
     } catch (error) {
       throw new Error(getErrorMessage(error, "Login failed"));
     }
