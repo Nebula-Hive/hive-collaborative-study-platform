@@ -106,7 +106,7 @@ const navItems = [
 ];
 
 const AppSidebar = () => {
-  const { isExpanded, toggleSidebar, isMobileOpen } = useSidebar();
+  const { isExpanded, toggleSidebar, isMobileOpen, toggleMobileSidebar } = useSidebar();
   const location = useLocation();
   const navigate = useNavigate();
   const [openSubmenu, setOpenSubmenu] = useState(null);
@@ -137,11 +137,11 @@ const AppSidebar = () => {
   return (
     <aside
       className={`fixed top-0 left-0 h-screen bg-white text-secondary-500 transition-all border duration-300 ease-in-out border-gray-200 z-50
-        ${isExpanded || isMobileOpen ? "w-[290px]" : "w-[90px]"}
+        ${isExpanded || isMobileOpen ? "w-[250px] lg:w-[288px]" : "w-[88px]"}
         ${isMobileOpen ? "translate-x-0" : "-translate-x-full"}
         lg:translate-x-0`}
     >
-      <div className="flex items-center justify-between justify-center py-4 px-5">
+      <div className="flex items-center justify-between py-4 px-5">
         <Link to="/">
           {isExpanded || isMobileOpen ? (
             <>
@@ -152,14 +152,10 @@ const AppSidebar = () => {
           )}
         </Link>
         <button
-          onClick={toggleSidebar}
+          onClick={toggleMobileSidebar}
           className="text-secondary-400 lg:hidden"
         >
-          {isExpanded ? (
-            <Icon icon="heroicons-outline:x-mark" className="w-6 h-6" />
-          ) : (
-            <Icon icon="heroicons-outline:bars-3" className="w-6 h-6" />
-          )}
+          <Icon icon="heroicons-outline:x-mark" className="w-6 h-6" />
         </button>
       </div>
 
@@ -174,15 +170,15 @@ const AppSidebar = () => {
                   <button
                     onClick={() => handleSubmenuToggle(index)}
                     className={`flex items-center w-full px-4 py-3 rounded-md hover:bg-primary-100 transition
-            ${!isExpanded ? "justify-center" : ""}
+            ${!(isExpanded || isMobileOpen) ? "justify-center" : ""}
             ${openSubmenu === index ? "bg-primary-100 text-primary-800" : ""}`}
                   >
                     <Icon
                       icon={`heroicons-outline:${item.icon}`}
                       className={`w-6 h-6`}
                     />
-                    {isExpanded && <span className="ml-3">{item.name}</span>}
-                    {isExpanded && (
+                    {(isExpanded || isMobileOpen) && <span className="ml-3">{item.name}</span>}
+                    {(isExpanded || isMobileOpen) && (
                       <Icon
                         icon={`heroicons-outline:chevron-down`}
                         className={`w-6 h-6 ml-auto transition-transform ${openSubmenu === index ? "rotate-180" : ""
@@ -194,7 +190,7 @@ const AppSidebar = () => {
                   // Normal Navigation Link
                   <Link
                     to={item.path}
-                    className={`flex items-center px-4 py-3 rounded-md transition ${!isExpanded ? "justify-center" : ""} ${isItemActive(item.path)
+                    className={`flex items-center px-4 py-3 rounded-md transition ${!(isExpanded || isMobileOpen) ? "justify-center" : ""} ${isItemActive(item.path)
                       ? "bg-primary-300 font-semibold text-primary-900"
                       : "bg-primary-50 hover:bg-primary-100"
                       }`}
@@ -203,7 +199,7 @@ const AppSidebar = () => {
                       icon={`heroicons-outline:${item.icon}`}
                       className={`w-6 h-6 `}
                     />
-                    {isExpanded && <span className="ml-3">{item.name}</span>}
+                    {(isExpanded || isMobileOpen) && <span className="ml-3">{item.name}</span>}
                   </Link>
                 )}
               </li>
