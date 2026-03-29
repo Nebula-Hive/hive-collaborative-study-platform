@@ -124,28 +124,8 @@ function UserManagementSuperAdmin() {
   return (
     <>
       <div className="overflow-hidden">
-        <div className="flex items-center justify-between mb-4 gap-3">
-          <div className="flex items-center gap-3 flex-1">
-            <div className="relative w-full max-w-sm">
-              <UserSearch
-                searchQuery={searchQuery}
-                setSearchQuery={setSearchQuery}
-                handleSearch={handleSearch}
-              />
-            </div>
-            <select
-              value={batchFilter}
-              onChange={(e) => handleBatchChange(e.target.value)}
-              className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-secondary-700 shadow-sm focus:border-primary-500 focus:ring-primary-500"
-            >
-              <option value="">All Batches</option>
-              {batchOptions.map((batch) => (
-                <option key={batch} value={batch}>
-                  Batch {batch}
-                </option>
-              ))}
-            </select>
-          </div>
+        {/* Row 1: Add New User button */}
+        <div className="flex justify-end mb-4">
           <button
             className="inline-flex items-center justify-center gap-2 rounded-sm py-2 px-4 bg-gray-800 text-white shadow-theme-xs hover:bg-gray-900"
             onClick={() => setOpenModel(true)}
@@ -153,6 +133,32 @@ function UserManagementSuperAdmin() {
             <Icon icon="heroicons-outline:plus" className="w-5 h-5" />
             Add New User
           </button>
+        </div>
+
+        {/* Row 2: Filter (left) + Search (right) */}
+        <div className="flex items-center justify-between mb-4 gap-3">
+          <select
+            value={batchFilter}
+            onChange={(e) => handleBatchChange(e.target.value)}
+            className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-secondary-700 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+          >
+            <option value="">All Batches</option>
+            {batchOptions.map((batch) => (
+              <option key={batch} value={batch}>
+                Batch {batch}
+              </option>
+            ))}
+          </select>
+          <div className="relative w-full max-w-sm">
+            <UserSearch
+              searchQuery={searchQuery}
+              setSearchQuery={(val) => {
+                setSearchQuery(val);
+                applyFilters(val, batchFilter);
+              }}
+              handleSearch={handleSearch}
+            />
+          </div>
         </div>
 
         <Card noborder>
