@@ -281,8 +281,6 @@ export default function Resources() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-1 text-sm text-gray-600">
                       <p>File: {resource.fileName || "-"}</p>
                       <p>Uploaded: {formatDate(resource.createdAt)}</p>
-                      <p>Uploaded By: {resource.uploadedBy || "-"}</p>
-                      {canManageResources && <p>Downloads: {resource.downloadCount || 0}</p>}
                       <p>Size: {formatFileSize(resource.fileSize)}</p>
                     </div>
                   </div>
