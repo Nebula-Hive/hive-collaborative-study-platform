@@ -491,7 +491,7 @@ export default function Resources() {
         </div>
       </Modal>
 
-      <SubjectAIChat subjectName={subject?.subjectName || "this subject"} />
+      <SubjectAIChat subjectName={subject?.subjectName || "this subject"} subjectCode={subjectCode} />
     </div>
   );
 }

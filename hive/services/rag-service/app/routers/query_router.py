@@ -1,6 +1,7 @@
 import json
 import logging
 from urllib.error import URLError
+from urllib.parse import quote
 from urllib.request import Request, urlopen
 
 from fastapi import APIRouter, HTTPException
@@ -16,7 +17,8 @@ router = APIRouter()
 
 
 def _fetch_subject_name(subject_code: str) -> str:
-    url = f"{settings.resource_service_url}/resources/subject/{subject_code}"
+    encoded = quote(subject_code, safe="")
+    url = f"{settings.resource_service_url}/resources/subject/{encoded}"
     req = Request(url, method="GET")
     try:
         with urlopen(req, timeout=5) as response:  # nosec B310

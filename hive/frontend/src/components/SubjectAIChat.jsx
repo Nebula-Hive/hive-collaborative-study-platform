@@ -1,8 +1,9 @@
 import React, { useState, useRef, useEffect } from "react";
 import { BsRobot } from "react-icons/bs";
 import { IoClose, IoSend } from "react-icons/io5";
+import instance from "@/lib/axios";
 
-export default function SubjectAIChat({ subjectName = "this subject" }) {
+export default function SubjectAIChat({ subjectName = "this subject", subjectCode }) {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([
     {
@@ -11,30 +12,61 @@ export default function SubjectAIChat({ subjectName = "this subject" }) {
     },
   ]);
   const [input, setInput] = useState("");
+  const [loading, setLoading] = useState(false);
   const messagesEndRef = useRef(null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  const handleSend = (e) => {
+  const handleSend = async (e) => {
     e.preventDefault();
-    if (!input.trim()) return;
+    if (!input.trim() || loading) return;
 
     const userMsg = { role: "user", text: input.trim() };
     setMessages((prev) => [...prev, userMsg]);
     setInput("");
+    setLoading(true);
 
-    // Simulated AI response (frontend only)
-    setTimeout(() => {
+    try {
+      // Build chat history for context (last 10 messages)
+      const chatHistory = messages
+        .filter((m) => m.role === "user" || m.role === "assistant")
+        .slice(-10)
+        .map((m) => ({
+          role: m.role === "ai" ? "assistant" : m.role,
+          content: m.text,
+        }));
+
+      const response = await instance.ragService.post("/api/rag/query", {
+        question: userMsg.text,
+        subjectCode: subjectCode,
+        chat_history: chatHistory,
+      });
+
+      const answer = response.data?.answer || "I couldn't find an answer. Please try rephrasing your question.";
+
       setMessages((prev) => [
         ...prev,
-        {
-          role: "ai",
-          text: "Thanks for your question! 🤖 The AI backend isn't connected yet, but once it is, I'll be able to answer questions based on all the uploaded materials for this subject.",
-        },
+        { role: "ai", text: answer },
       ]);
-    }, 800);
+    } catch (error) {
+      console.error("RAG query error:", error);
+
+      let errorMsg = "Sorry, I encountered an error. Please try again.";
+      if (error.response?.status === 500) {
+        errorMsg = "The AI service is temporarily unavailable. Please try again in a moment.";
+      } else if (!error.response) {
+        errorMsg = "Unable to reach the AI service. Make sure the RAG service is running.";
+      }
+
+      setMessages((prev) => [
+        ...prev,
+        { role: "ai", text: errorMsg },
+      ]);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -92,6 +124,17 @@ export default function SubjectAIChat({ subjectName = "this subject" }) {
                 </div>
               </div>
             ))}
+            {loading && (
+              <div className="flex justify-start">
+                <div className="bg-white border border-gray-200 text-gray-500 px-4 py-2.5 rounded-2xl rounded-bl-md shadow-sm text-sm">
+                  <span className="inline-flex gap-1">
+                    <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
+                    <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
+                    <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
+                  </span>
+                </div>
+              </div>
+            )}
             <div ref={messagesEndRef} />
           </div>
 
@@ -105,11 +148,12 @@ export default function SubjectAIChat({ subjectName = "this subject" }) {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder="Ask a question..."
-              className="flex-1 px-4 py-2.5 rounded-full bg-gray-100 border-none text-sm focus:outline-none focus:ring-2 focus:ring-primary-400 placeholder:text-gray-400"
+              disabled={loading}
+              className="flex-1 px-4 py-2.5 rounded-full bg-gray-100 border-none text-sm focus:outline-none focus:ring-2 focus:ring-primary-400 placeholder:text-gray-400 disabled:opacity-50"
             />
             <button
               type="submit"
-              disabled={!input.trim()}
+              disabled={!input.trim() || loading}
               className="w-10 h-10 rounded-full bg-primary-500 text-primary-900 flex items-center justify-center hover:bg-primary-600 transition disabled:opacity-40 disabled:cursor-not-allowed"
             >
               <IoSend size={16} />
