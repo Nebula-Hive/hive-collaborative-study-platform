@@ -37,11 +37,11 @@ const AppHeader = () => {
   };
 
   return (
-    <header className="sticky top-0 flex w-full bg-white border-gray-200 z-999  lg:border-b">
+    <header className="sticky top-0 flex w-full bg-white border-gray-200 z-40 lg:border-b">
       <div className="flex flex-col items-center justify-between grow lg:flex-row lg:px-6 py-3">
-        <div className="flex items-center justify-between w-full gap-2 px-3 py-1 border-b border-gray-200 sm:gap-4 lg:justify-normal lg:border-b-0 lg:px-0 ">
+        <div className="flex items-center justify-between w-full gap-2 px-3 py-1 border-b border-gray-200 sm:gap-4 lg:justify-normal lg:border-b-0 lg:px-0">
           <button
-            className="items-center justify-center w-5 h-5 text-gray-500 border-gray-200 rounded-md z-99999  lg:flex  lg:h-8 lg:w-8 lg:border"
+            className="items-center justify-center w-5 h-5 text-gray-500 border-gray-200 rounded-md lg:flex lg:h-8 lg:w-8 lg:border"
             onClick={handleToggle}
             aria-label="Toggle Sidebar"
           >
@@ -97,7 +97,7 @@ const AppHeader = () => {
 
           <button
             onClick={toggleApplicationMenu}
-            className="flex items-center justify-center w-8 h-8 text-gray-700 rounded-md z-99999 hover:bg-gray-100 lg:hidden"
+            className="flex items-center justify-center w-8 h-8 text-gray-700 rounded-md hover:bg-gray-100 lg:hidden"
           >
             <svg
               width="24"
