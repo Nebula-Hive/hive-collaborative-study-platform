@@ -12,6 +12,7 @@ function UserManagementSuperAdmin() {
   const [users, setUsers] = useState([]);
   const [filteredUsers, setFilteredUsers] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [batchFilter, setBatchFilter] = useState("");
   const [fetchLoading, setFetchLoading] = useState(true);
   const [openDrawer, setOpenDrawer] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
@@ -44,19 +45,37 @@ function UserManagementSuperAdmin() {
     fetchUsers();
   }, []);
 
-  const handleSearch = () => {
-    if (!searchQuery) {
-      setFilteredUsers(users);
-      return;
+  // Extract unique batch years for the filter dropdown
+  const batchOptions = [...new Set(users.map((u) => u.batch).filter(Boolean))]
+    .sort((a, b) => b - a);
+
+  const applyFilters = (search, batch) => {
+    let result = users;
+
+    if (batch) {
+      result = result.filter((user) => String(user.batch) === String(batch));
     }
-    const lowercasedQuery = searchQuery.toLowerCase();
-    const filtered = users.filter(
-      (user) =>
-        user.studentNumber?.toLowerCase().includes(lowercasedQuery) ||
-        user.name?.toLowerCase().includes(lowercasedQuery) ||
-        user.email?.toLowerCase().includes(lowercasedQuery)
-    );
-    setFilteredUsers(filtered);
+
+    if (search) {
+      const lowercasedQuery = search.toLowerCase();
+      result = result.filter(
+        (user) =>
+          user.studentNumber?.toLowerCase().includes(lowercasedQuery) ||
+          user.name?.toLowerCase().includes(lowercasedQuery) ||
+          user.email?.toLowerCase().includes(lowercasedQuery)
+      );
+    }
+
+    setFilteredUsers(result);
+  };
+
+  const handleSearch = () => {
+    applyFilters(searchQuery, batchFilter);
+  };
+
+  const handleBatchChange = (value) => {
+    setBatchFilter(value);
+    applyFilters(searchQuery, value);
   };
 
   const handleClick = async (studentNumber) => {
@@ -105,13 +124,27 @@ function UserManagementSuperAdmin() {
   return (
     <>
       <div className="overflow-hidden">
-        <div className="flex items-center justify-between mb-4">
-          <div className="relative w-full max-w-sm">
-            <UserSearch
-              searchQuery={searchQuery}
-              setSearchQuery={setSearchQuery}
-              handleSearch={handleSearch}
-            />
+        <div className="flex items-center justify-between mb-4 gap-3">
+          <div className="flex items-center gap-3 flex-1">
+            <div className="relative w-full max-w-sm">
+              <UserSearch
+                searchQuery={searchQuery}
+                setSearchQuery={setSearchQuery}
+                handleSearch={handleSearch}
+              />
+            </div>
+            <select
+              value={batchFilter}
+              onChange={(e) => handleBatchChange(e.target.value)}
+              className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-secondary-700 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+            >
+              <option value="">All Batches</option>
+              {batchOptions.map((batch) => (
+                <option key={batch} value={batch}>
+                  Batch {batch}
+                </option>
+              ))}
+            </select>
           </div>
           <button
             className="inline-flex items-center justify-center gap-2 rounded-sm py-2 px-4 bg-gray-800 text-white shadow-theme-xs hover:bg-gray-900"
