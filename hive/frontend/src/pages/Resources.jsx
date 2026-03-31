@@ -290,7 +290,7 @@ export default function Resources() {
                       type="button"
                       onClick={() => handleDownload(resource.resourceId)}
                       disabled={downloadingResourceId === resource.resourceId}
-                      className="bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 border border-gray-300 rounded-md disabled:opacity-50"
+                      className="bg-primary-900 text-white px-3 py-2 text-sm font-medium rounded-md hover:bg-slate-800 transition disabled:opacity-50"
                     >
                       {downloadingResourceId === resource.resourceId ? "Loading..." : "Download"}
                     </button>
