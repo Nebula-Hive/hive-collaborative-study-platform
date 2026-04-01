@@ -1,7 +1,51 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
+import { getProgressByUserId } from "@/services/progressService";
+import { useAuth } from "@/context/AuthContext";
 
-export default function GPAWidget({ gpa = 3.65, maxGpa = 4.0 }) {
-  const percentage = (gpa / maxGpa) * 100;
+export default function GPAWidget({ maxGpa = 4.0 }) {
+  const { user } = useAuth();
+  const [gpa, setGpa] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchGPA = async () => {
+      try {
+        if (!user?.uid) {
+          setError("Not logged in");
+          setLoading(false);
+          return;
+        }
+
+        setLoading(true);
+        const data = await getProgressByUserId(user.uid);
+        console.log("Progress data fetched:", data);
+        
+        // Handle case where data might be wrapped or different structure
+        const cumulativeGPA = data?.cumulativeGPA !== undefined ? data.cumulativeGPA : null;
+        
+        if (cumulativeGPA === null || cumulativeGPA === undefined) {
+          console.warn("Cumulative GPA not found in response. Full response:", data);
+          setError("GPA data not available");
+          setGpa(0);
+        } else {
+          setGpa(cumulativeGPA);
+          setError(null);
+        }
+      } catch (err) {
+        console.error("Failed to fetch cumulative GPA:", err);
+        console.error("Error details:", err.response?.data || err.message);
+        setError("Unable to load GPA");
+        setGpa(0);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchGPA();
+  }, [user?.uid]);
+
+  const percentage = gpa !== null ? (gpa / maxGpa) * 100 : 0;
 
   // SVG arc parameters
   const radius = 60;
@@ -11,6 +55,34 @@ export default function GPAWidget({ gpa = 3.65, maxGpa = 4.0 }) {
   const trackGap = circumference * 0.25;
   const progressLength = trackLength * (percentage / 100);
   const progressGap = circumference - progressLength;
+
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center">
+        <h3 className="text-sm font-semibold text-secondary-700 mb-4 self-start">
+          Academic Progress
+        </h3>
+        <div className="flex items-center justify-center w-[160px] h-[160px]">
+          <div className="animate-spin">
+            <div className="w-12 h-12 border-4 border-gray-200 border-t-secondary-900 rounded-full"></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center">
+        <h3 className="text-sm font-semibold text-secondary-700 mb-4 self-start">
+          Academic Progress
+        </h3>
+        <div className="flex items-center justify-center w-[160px] h-[160px]">
+          <p className="text-xs text-red-600 text-center">{error}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col items-center">
@@ -57,7 +129,7 @@ export default function GPAWidget({ gpa = 3.65, maxGpa = 4.0 }) {
             GPA
           </span>
           <span className="text-3xl font-bold text-secondary-900">
-            {gpa.toFixed(2)}
+            {gpa !== null ? gpa.toFixed(2) : "0.00"}
           </span>
         </div>
       </div>

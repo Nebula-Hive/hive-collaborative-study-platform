@@ -147,6 +147,11 @@ const getProgress = async (req, res) => {
       return res.status(404).json({ message: 'No progress data found' });
     }
 
+    // Ensure cumulativeGPA is calculated even if missing from database
+    if (!record.cumulativeGPA || record.cumulativeGPA === undefined) {
+      record.cumulativeGPA = calculateCumulativeGPA(record.semesters || []);
+    }
+
     return res.status(200).json(record);
   } catch (error) {
     console.error('getProgress error:', error.message);
@@ -161,6 +166,11 @@ const getProgressByUserId = async (req, res) => {
     const record = await Progress.findOne({ userId }).lean();
     if (!record) {
       return res.status(404).json({ message: 'No progress data found for this user' });
+    }
+
+    // Ensure cumulativeGPA is calculated even if missing from database
+    if (!record.cumulativeGPA || record.cumulativeGPA === undefined) {
+      record.cumulativeGPA = calculateCumulativeGPA(record.semesters || []);
     }
 
     return res.status(200).json(record);
