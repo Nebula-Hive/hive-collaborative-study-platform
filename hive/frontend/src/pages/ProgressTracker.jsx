@@ -1064,51 +1064,53 @@ export default function ProgressTracker() {
             })}
           </div>
 
-          <div className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm">
-            <h2 className="text-base font-semibold text-secondary-800">GPA Calculator</h2>
-            <p className="text-sm text-secondary-500 mt-1">
-              Calculate what GPA you need to achieve your target.
-            </p>
+          {!isAdminUser && (
+            <div className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm">
+              <h2 className="text-base font-semibold text-secondary-800">GPA Calculator</h2>
+              <p className="text-sm text-secondary-500 mt-1">
+                Calculate what GPA you need to achieve your target.
+              </p>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-              <div className="fromGroup">
-                <label className="form-label">Current cumulative GPA</label>
-                <input type="number" className="form-control" value={currentGPA.toFixed(2)} readOnly />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                <div className="fromGroup">
+                  <label className="form-label">Current cumulative GPA</label>
+                  <input type="number" className="form-control" value={currentGPA.toFixed(2)} readOnly />
+                </div>
+                <div className="fromGroup">
+                  <label className="form-label">Current total credits</label>
+                  <input type="number" className="form-control" value={creditsCompleted} readOnly />
+                </div>
+                <div className="fromGroup">
+                  <label className="form-label">Target cumulative GPA</label>
+                  <input
+                    type="number"
+                    className="form-control"
+                    placeholder="eg 3.60"
+                    value={targetGPA}
+                    onChange={(e) => setTargetGPA(e.target.value)}
+                  />
+                </div>
+                <div className="fromGroup">
+                  <label className="form-label">Planned credits for next semester</label>
+                  <input
+                    type="number"
+                    className="form-control"
+                    placeholder="eg 15"
+                    value={plannedCredits}
+                    onChange={(e) => setPlannedCredits(e.target.value)}
+                  />
+                </div>
               </div>
-              <div className="fromGroup">
-                <label className="form-label">Current total credits</label>
-                <input type="number" className="form-control" value={creditsCompleted} readOnly />
-              </div>
-              <div className="fromGroup">
-                <label className="form-label">Target cumulative GPA</label>
-                <input
-                  type="number"
-                  className="form-control"
-                  placeholder="eg 3.60"
-                  value={targetGPA}
-                  onChange={(e) => setTargetGPA(e.target.value)}
-                />
-              </div>
-              <div className="fromGroup">
-                <label className="form-label">Planned credits for next semester</label>
-                <input
-                  type="number"
-                  className="form-control"
-                  placeholder="eg 15"
-                  value={plannedCredits}
-                  onChange={(e) => setPlannedCredits(e.target.value)}
-                />
-              </div>
+
+              <Button text="Calculate" className="btn-secondary mt-4" onClick={runGpaCalculator} />
+
+              {gpaAdvice && (
+                <div className="mt-4 bg-slate-50 border border-slate-200 rounded-md p-4 text-sm text-secondary-700">
+                  {gpaAdvice}
+                </div>
+              )}
             </div>
-
-            <Button text="Calculate" className="btn-secondary mt-4" onClick={runGpaCalculator} />
-
-            {gpaAdvice && (
-              <div className="mt-4 bg-slate-50 border border-slate-200 rounded-md p-4 text-sm text-secondary-700">
-                {gpaAdvice}
-              </div>
-            )}
-          </div>
+          )}
         </>
       ) : (
         renderEmptyState()
