@@ -19,6 +19,7 @@ const {
   deleteUser,
   getAllAdmins,
   promoteUserToAdmin,
+  demoteAdminToUser,
   updateAdmin,
   deleteAdmin,
 } = require('../controllers/userController');
@@ -62,6 +63,9 @@ router.post('/admins', authMiddleware, requireRole('superadmin'), (req, res) => 
 
 // POST /admins/promote/:studentNumber - promote user to admin (superadmin only)
 router.post('/admins/promote/:studentNumber', authMiddleware, requireRole('superadmin'), promoteUserToAdmin);
+
+// POST /admins/demote/:studentNumber - demote admin to user (superadmin only)
+router.post('/admins/demote/:studentNumber', authMiddleware, requireRole('superadmin'), demoteAdminToUser);
 
 // PUT /admins/:studentNumber - superadmin only
 router.put('/admins/:studentNumber', authMiddleware, requireRole('superadmin'), validateUpdateAdmin, updateAdmin);

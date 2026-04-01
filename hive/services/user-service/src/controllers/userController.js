@@ -463,6 +463,49 @@ const promoteUserToAdmin = async (req, res) => {
   }
 };
 
+// POST demote admin to student (superadmin only)
+const demoteAdminToUser = async (req, res) => {
+  try {
+    if (req.user.role !== "superadmin") {
+      return res.status(403).json({ message: "Forbidden" });
+    }
+
+    const { studentNumber } = req.params;
+
+    const user = await User.findOne({ studentNumber, role: "admin", isActive: true });
+
+    if (!user) {
+      return res.status(404).json({ message: "Admin not found" });
+    }
+
+    user.role = "student";
+    await user.save();
+
+    const firebaseWarning = await syncFirebaseSafely(
+      user.firebaseUid,
+      async (uid) => {
+        await admin.auth().setCustomUserClaims(uid, { role: "student" });
+      },
+      "demoteAdminToUser"
+    );
+
+    return res.json({
+      message: "Admin demoted to user successfully",
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        studentNumber: user.studentNumber,
+        role: user.role,
+      },
+      warning: firebaseWarning,
+    });
+  } catch (err) {
+    console.error("demoteAdminToUser error", err);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
+
 // DELETE soft delete admin (superadmin only)
 const deleteAdmin = async (req, res) => {
   try {
@@ -591,6 +634,7 @@ module.exports = {
   getAllAdmins,
   createAdmin,
   promoteUserToAdmin,
+  demoteAdminToUser,
   updateAdmin,
   deleteAdmin,
 };
