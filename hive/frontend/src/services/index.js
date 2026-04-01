@@ -52,4 +52,9 @@ export {
   updateSemester,
   deleteSemester,
   getProgressSummary,
+  getCourses,
+  getCourseByCode,
+  createCourse,
+  updateCourse,
+  deleteCourse,
 } from "./progressService";
