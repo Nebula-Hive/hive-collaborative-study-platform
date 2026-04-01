@@ -20,6 +20,16 @@ export {
 
   getBatchChatHistory,
 
+  getNotes,
+  createNote,
+  deleteNote,
+  updateNote,
+  
+  getFlashCardDecks,
+  createFlashCardDeck,
+  updateFlashCardDeck,
+  deleteFlashCardDeck,
+
   getAllSessions,
   getSessionById,
   getCurrentMonthSessions,
