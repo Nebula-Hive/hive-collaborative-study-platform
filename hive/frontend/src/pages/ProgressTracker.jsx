@@ -134,12 +134,28 @@ const formatTrend = (semesters = []) => {
   const sorted = sortSemesters(semesters);
   const baseYear = sorted.length > 0 ? parseYearStart(sorted[0].year) : 0;
 
-  return sorted.map((semester) => ({
-    ...semester,
-    label: `Y${Math.max(parseYearStart(semester.year) - baseYear + 1, 1)}S${semester.semester}`,
-    gpa: semester.semesterGPA,
-    credits: semester.totalCredits,
-  }));
+  let runningWeightedPoints = 0;
+  let runningCredits = 0;
+
+  return sorted.map((semester) => {
+    const modules = semester.modules || [];
+    const semesterCredits = Number(semester.totalCredits || 0);
+    const moduleWeightedPoints = modules.reduce(
+      (sum, module) => sum + Number(module.gradePoints || 0) * Number(module.creditHours || 0),
+      0
+    );
+    const semesterWeightedPoints = moduleWeightedPoints || Number(semester.semesterGPA || 0) * semesterCredits;
+
+    runningWeightedPoints += semesterWeightedPoints;
+    runningCredits += semesterCredits;
+
+    return {
+      ...semester,
+      label: `Y${Math.max(parseYearStart(semester.year) - baseYear + 1, 1)}S${semester.semester}`,
+      gpa: runningCredits > 0 ? round2(runningWeightedPoints / runningCredits) : 0,
+      credits: semester.totalCredits,
+    };
+  });
 };
 
 function SemesterModal({
@@ -525,6 +541,29 @@ export default function ProgressTracker() {
   }, [isAddModalOpen, isEditModalOpen, semesterForm.yearLevel, semesterForm.semester]);
 
   const trendData = useMemo(() => formatTrend(progress.semesters), [progress.semesters]);
+
+  const cumulativeGpaBySemesterId = useMemo(() => {
+    const map = {};
+    let runningWeightedPoints = 0;
+    let runningCredits = 0;
+
+    sortSemesters(progress.semesters).forEach((semester) => {
+      const modules = semester.modules || [];
+      const moduleWeighted = modules.reduce(
+        (sum, module) => sum + Number(module.gradePoints || 0) * Number(module.creditHours || 0),
+        0
+      );
+      const semesterCredits = Number(semester.totalCredits || 0);
+      const weightedPoints = moduleWeighted || Number(semester.semesterGPA || 0) * semesterCredits;
+
+      runningWeightedPoints += weightedPoints;
+      runningCredits += semesterCredits;
+
+      map[semester._id] = runningCredits > 0 ? round2(runningWeightedPoints / runningCredits) : 0;
+    });
+
+    return map;
+  }, [progress.semesters]);
 
   const filteredSummary = useMemo(() => {
     if (!searchQuery.trim()) return summaryList;
@@ -946,7 +985,10 @@ export default function ProgressTracker() {
           </div>
 
           <div className="space-y-4">
-            {progress.semesters.map((semester) => (
+            {progress.semesters.map((semester) => {
+              const semesterCumulativeGPA = Number(cumulativeGpaBySemesterId[semester._id] || 0);
+
+              return (
               <div key={semester._id} className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm">
                 <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
                   <div>
@@ -956,8 +998,8 @@ export default function ProgressTracker() {
                     <p className="text-sm text-secondary-500 mt-1">Total Credits: {semester.totalCredits}</p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className={`badge ${semester.semesterGPA >= 3.5 ? "bg-success-100 text-success-600" : "bg-slate-100 text-secondary-700"}`}>
-                      GPA {Number(semester.semesterGPA || 0).toFixed(2)}
+                    <span className={`badge ${semesterCumulativeGPA >= 3.5 ? "bg-success-100 text-success-600" : "bg-slate-100 text-secondary-700"}`}>
+                      Cumulative GPA {semesterCumulativeGPA.toFixed(2)}
                     </span>
                     <button
                       type="button"
@@ -1018,14 +1060,15 @@ export default function ProgressTracker() {
                           <td className="table-td">-</td>
                           <td className="table-td font-semibold">{semester.totalCredits}</td>
                           <td className="table-td">-</td>
-                          <td className="table-td font-semibold">GPA {Number(semester.semesterGPA || 0).toFixed(2)}</td>
+                          <td className="table-td font-semibold">Cumulative GPA {semesterCumulativeGPA.toFixed(2)}</td>
                         </tr>
                       </tbody>
                     </table>
                   </div>
                 )}
               </div>
-            ))}
+              );
+            })}
           </div>
 
           <div className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm">
