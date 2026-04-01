@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from "react";
-import { getProgressByUserId } from "@/services/progressService";
+import { getProgress, getProgressByUserId } from "@/services/progressService";
 import { useAuth } from "@/context/AuthContext";
 
 export default function GPAWidget({ maxGpa = 4.0 }) {
-  const { user } = useAuth();
+  const { user, role, viewMode } = useAuth();
   const [gpa, setGpa] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -18,11 +18,21 @@ export default function GPAWidget({ maxGpa = 4.0 }) {
         }
 
         setLoading(true);
-        const data = await getProgressByUserId(user.uid);
+        const isAdminPreviewingStudent =
+          (role === "admin" || role === "superadmin") && viewMode === "student";
+
+        const data = isAdminPreviewingStudent
+          ? await getProgressByUserId(user.uid)
+          : await getProgress();
         console.log("Progress data fetched:", data);
         
-        // Handle case where data might be wrapped or different structure
-        const cumulativeGPA = data?.cumulativeGPA !== undefined ? data.cumulativeGPA : null;
+        // Handle both single-record and array responses defensively.
+        const record = Array.isArray(data)
+          ? data.find((item) => item?.userId === user.uid) || null
+          : data;
+
+        const cumulativeGPA =
+          record?.cumulativeGPA !== undefined ? record.cumulativeGPA : null;
         
         if (cumulativeGPA === null || cumulativeGPA === undefined) {
           console.warn("Cumulative GPA not found in response. Full response:", data);
@@ -43,7 +53,7 @@ export default function GPAWidget({ maxGpa = 4.0 }) {
     };
 
     fetchGPA();
-  }, [user?.uid]);
+  }, [user?.uid, role, viewMode]);
 
   const percentage = gpa !== null ? (gpa / maxGpa) * 100 : 0;
 
