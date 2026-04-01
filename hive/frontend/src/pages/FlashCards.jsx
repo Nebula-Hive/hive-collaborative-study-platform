@@ -32,6 +32,7 @@ export default function FlashCards() {
   const [showMobileDecks, setShowMobileDecks] = useState(false);
   const [isLoadingDecks, setIsLoadingDecks] = useState(true);
   const [requestError, setRequestError] = useState("");
+  const [cardMarks, setCardMarks] = useState({});
 
   // Creation form state
   const [newDeckName, setNewDeckName] = useState("");
