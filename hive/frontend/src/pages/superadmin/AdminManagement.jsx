@@ -8,6 +8,13 @@ import AdminSearch from "@/pages/superadmin/components/AdminSearch";
 import { getAllAdmins, deleteAdmin, demoteAdminToUser, updateAdmin } from "@/services";
 import PromoteUserToAdmin from "./components/PromoteUserToAdmin";
 
+const BUTTON_COLORS = {
+  primary: { backgroundColor: "#DDF2FF", color: "#0A435B", border: "1px solid #00BFD8" },
+  success: { backgroundColor: "#DDF5E6", color: "#1B5133", border: "1px solid #3FB07A" },
+  warning: { backgroundColor: "#FBEAB4", color: "#4A3A00", border: "1px solid #D9A900" },
+  danger: { backgroundColor: "#F9DEE8", color: "#6F2F47", border: "1px solid #E07C9C" },
+};
+
 function AdminManagement() {
   const [admins, setAdmins] = useState([]);
   const [filteredAdmins, setFilteredAdmins] = useState([]);
@@ -121,7 +128,8 @@ function AdminManagement() {
             />
           </div>
           <button
-            className="inline-flex items-center justify-center gap-2 rounded-sm py-2 px-4 bg-green-600 text-white shadow-theme-xs hover:bg-green-700"
+            className="inline-flex items-center justify-center gap-2 rounded-sm py-2 px-4 shadow-theme-xs transition-opacity hover:opacity-90"
+            style={BUTTON_COLORS.success}
             onClick={() => setOpenPromoteModal(true)}
           >
             <Icon icon="heroicons-outline:arrow-up" className="w-5 h-5" />
@@ -171,21 +179,24 @@ function AdminManagement() {
                                   <button
                                     type="button"
                                     onClick={() => handleClick(row)}
-                                    className="px-3 py-1 text-xs font-medium text-white bg-blue-600 rounded hover:bg-blue-700"
+                                    className="px-3 py-1 text-xs font-medium rounded transition-opacity hover:opacity-90"
+                                    style={BUTTON_COLORS.primary}
                                   >
                                     Update
                                   </button>
                                   <button
                                     type="button"
                                     onClick={() => handleDemoteAdmin(row.studentNumber)}
-                                    className="px-3 py-1 text-xs font-medium text-white bg-amber-600 rounded hover:bg-amber-700"
+                                    className="px-3 py-1 text-xs font-medium rounded transition-opacity hover:opacity-90"
+                                    style={BUTTON_COLORS.warning}
                                   >
                                     Demote
                                   </button>
                                   <button
                                     type="button"
                                     onClick={() => handleDeleteAdmin(row.studentNumber)}
-                                    className="px-3 py-1 text-xs font-medium text-white bg-red-600 rounded hover:bg-red-700"
+                                    className="px-3 py-1 text-xs font-medium rounded transition-opacity hover:opacity-90"
+                                    style={BUTTON_COLORS.danger}
                                   >
                                     Delete
                                   </button>
