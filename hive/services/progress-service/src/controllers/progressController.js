@@ -172,7 +172,7 @@ const getProgressByUserId = async (req, res) => {
 
 const addSemester = async (req, res) => {
   try {
-    if (req.user.role !== 'student') {
+    if (!['student', 'admin', 'superadmin'].includes(req.user.role)) {
       return res.status(403).json({ message: 'You do not have permission' });
     }
 
@@ -230,7 +230,7 @@ const addSemester = async (req, res) => {
 
 const updateSemester = async (req, res) => {
   try {
-    if (req.user.role !== 'student') {
+    if (!['student', 'admin', 'superadmin'].includes(req.user.role)) {
       return res.status(403).json({ message: 'You do not have permission' });
     }
 
@@ -290,7 +290,7 @@ const updateSemester = async (req, res) => {
 
 const deleteSemester = async (req, res) => {
   try {
-    if (req.user.role !== 'student') {
+    if (!['student', 'admin', 'superadmin'].includes(req.user.role)) {
       return res.status(403).json({ message: 'You do not have permission' });
     }
 

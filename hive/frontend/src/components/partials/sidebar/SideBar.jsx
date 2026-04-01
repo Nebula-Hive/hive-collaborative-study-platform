@@ -72,6 +72,12 @@ const navItems = [
     path: "/resources",
     allowed: ["admin"],
   },
+  {
+    icon: "chart-bar",
+    name: "Academic Progress",
+    path: "/progress",
+    allowed: ["admin"],
+  },
   // Superadmin specific items
   {
     icon: "home",
