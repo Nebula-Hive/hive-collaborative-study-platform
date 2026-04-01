@@ -422,8 +422,9 @@ const CustomTooltip = ({ active, payload, label }) => {
 };
 
 export default function ProgressTracker() {
-  const { role } = useAuth();
-  const isAdminUser = role === "admin" || role === "superadmin";
+  const { role, viewMode, user } = useAuth();
+  const isPrivilegedRole = role === "admin" || role === "superadmin";
+  const isAdminUser = isPrivilegedRole && viewMode !== "student";
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -508,8 +509,9 @@ export default function ProgressTracker() {
       loadAdminSummary();
       return;
     }
-    loadStudentProgress();
-  }, [isAdminUser]);
+    const ownUserId = isPrivilegedRole ? user?.uid : undefined;
+    loadStudentProgress(ownUserId);
+  }, [isAdminUser, isPrivilegedRole, user?.uid]);
 
   useEffect(() => {
     const loadCoursesForSelection = async () => {
