@@ -6,6 +6,11 @@ import UserProfile from "@/pages/admin/components/UserProfile";
 import UserSearch from "@/pages/admin/components/UserSearch";
 import { getAllUsers, getUserByStudentNumber, deleteUser, updateUser } from "@/services";
 
+const BUTTON_COLORS = {
+  primary: { backgroundColor: "#EAF8FF", color: "#0D4B66" },
+  danger: { backgroundColor: "#FFEFF4", color: "#7A3650" },
+};
+
 function Users() {
   const [users, setUsers] = useState([]);
   const [filteredUsers, setFilteredUsers] = useState([]);
@@ -154,14 +159,16 @@ function Users() {
                                   <button
                                     type="button"
                                     onClick={() => handleClick(row.studentNumber)}
-                                    className="px-3 py-1 text-xs font-medium text-white bg-blue-600 rounded hover:bg-blue-700"
+                                    className="px-3 py-1 text-xs font-medium rounded transition-opacity hover:opacity-90"
+                                    style={BUTTON_COLORS.primary}
                                   >
                                     Update
                                   </button>
                                   <button
                                     type="button"
                                     onClick={() => handleDeleteUser(row.studentNumber)}
-                                    className="px-3 py-1 text-xs font-medium text-white bg-red-600 rounded hover:bg-red-700"
+                                    className="px-3 py-1 text-xs font-medium rounded transition-opacity hover:opacity-90"
+                                    style={BUTTON_COLORS.danger}
                                   >
                                     Delete
                                   </button>

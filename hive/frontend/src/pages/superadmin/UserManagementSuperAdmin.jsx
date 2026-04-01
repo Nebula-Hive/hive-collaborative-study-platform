@@ -6,6 +6,11 @@ import UserProfile from "@/pages/admin/components/UserProfile";
 import UserSearch from "@/pages/admin/components/UserSearch";
 import { getAllUsers, getUserByStudentNumber, deleteUser, updateUser } from "@/services";
 
+const BUTTON_COLORS = {
+  primary: { backgroundColor: "#DDF2FF", color: "#0A435B", border: "1px solid #00BFD8" },
+  danger: { backgroundColor: "#F9DEE8", color: "#6F2F47", border: "1px solid #E07C9C" },
+};
+
 function UserManagementSuperAdmin() {
   const [users, setUsers] = useState([]);
   const [filteredUsers, setFilteredUsers] = useState([]);
@@ -189,14 +194,16 @@ function UserManagementSuperAdmin() {
                                   <button
                                     type="button"
                                     onClick={() => handleClick(row.studentNumber)}
-                                    className="px-3 py-1 text-xs font-medium text-white bg-blue-600 rounded hover:bg-blue-700"
+                                    className="px-3 py-1 text-xs font-medium rounded transition-opacity hover:opacity-90"
+                                    style={BUTTON_COLORS.primary}
                                   >
                                     Update
                                   </button>
                                   <button
                                     type="button"
                                     onClick={() => handleDeleteUser(row.studentNumber)}
-                                    className="px-3 py-1 text-xs font-medium text-white bg-red-600 rounded hover:bg-red-700"
+                                    className="px-3 py-1 text-xs font-medium rounded transition-opacity hover:opacity-90"
+                                    style={BUTTON_COLORS.danger}
                                   >
                                     Delete
                                   </button>
