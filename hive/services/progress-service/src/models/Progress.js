@@ -4,7 +4,7 @@ const moduleSchema = new mongoose.Schema(
   {
     moduleCode: { type: String, required: true, trim: true },
     moduleName: { type: String, required: true, trim: true },
-    creditHours: { type: Number, required: true, min: 1, max: 4 },
+    creditHours: { type: Number, required: true, min: 1, max: 9 },
     grade: {
       type: String,
       required: true,

@@ -1,5 +1,6 @@
 const Progress = require('../models/Progress');
 const User = require('../models/User');
+const Course = require('../models/Course');
 
 const GRADE_POINTS = {
   'A+': 4.0,
@@ -15,6 +16,34 @@ const GRADE_POINTS = {
 };
 
 const round2 = (value) => Number((value || 0).toFixed(2));
+
+const normalizeCode = (value = '') => String(value).trim().toUpperCase();
+
+const enrichModulesWithCourses = async (modules = []) => {
+  const requestedCodes = [...new Set(modules.map((module) => normalizeCode(module.moduleCode)).filter(Boolean))];
+  const matchedCourses = await Course.find({ courseCode: { $in: requestedCodes }, isActive: true }).lean();
+
+  const byCode = new Map(matchedCourses.map((course) => [normalizeCode(course.courseCode), course]));
+
+  const invalidCodes = requestedCodes.filter((code) => !byCode.has(code));
+  if (invalidCodes.length > 0) {
+    const err = new Error(`Invalid course code(s): ${invalidCodes.join(', ')}`);
+    err.statusCode = 400;
+    throw err;
+  }
+
+  return modules.map((module) => {
+    const courseCode = normalizeCode(module.moduleCode);
+    const course = byCode.get(courseCode);
+
+    return {
+      moduleCode: course.courseCode,
+      moduleName: course.courseName,
+      creditHours: Number(course.creditHours),
+      grade: module.grade,
+    };
+  });
+};
 
 const calculateSemester = (semesterPayload) => {
   const modules = (semesterPayload.modules || []).map((module) => {
@@ -149,7 +178,11 @@ const addSemester = async (req, res) => {
       return res.status(401).json({ message: 'Session expired. Please login again.' });
     }
 
-    const computedSemester = calculateSemester(req.body);
+    const enrichedModules = await enrichModulesWithCourses(req.body.modules || []);
+    const computedSemester = calculateSemester({
+      ...req.body,
+      modules: enrichedModules,
+    });
 
     let progress = await Progress.findOne({ userId: student.userId });
 
@@ -185,6 +218,9 @@ const addSemester = async (req, res) => {
     });
   } catch (error) {
     console.error('addSemester error:', error.message);
+    if (error.statusCode) {
+      return res.status(error.statusCode).json({ message: error.message });
+    }
     return res.status(500).json({ message: 'Server error. Please try again.' });
   }
 };
@@ -207,7 +243,11 @@ const updateSemester = async (req, res) => {
       return res.status(404).json({ message: 'Semester not found' });
     }
 
-    const computedSemester = calculateSemester(req.body);
+    const enrichedModules = await enrichModulesWithCourses(req.body.modules || []);
+    const computedSemester = calculateSemester({
+      ...req.body,
+      modules: enrichedModules,
+    });
 
     const duplicate = progress.semesters.some(
       (entry) =>
@@ -238,6 +278,9 @@ const updateSemester = async (req, res) => {
     });
   } catch (error) {
     console.error('updateSemester error:', error.message);
+    if (error.statusCode) {
+      return res.status(error.statusCode).json({ message: error.message });
+    }
     return res.status(500).json({ message: 'Server error. Please try again.' });
   }
 };
