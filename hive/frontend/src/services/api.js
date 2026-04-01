@@ -266,15 +266,95 @@ export const getBatchChatHistory = async (batch) => {
 //Note Service APIs begin
 
 //--------------Notes------------------
+export const getNotes = async () => {
+  const response = await instance.noteService.get(`/api/notes`, {
+    headers: instance.defaultHeaders()
+  });
+  return response.data;
+};
 
+export const createNote = async ({ content, isVoiceNote, title }) => {
+  const response = await instance.noteService.post(
+    `/api/notes/create`,
+    { content, isVoiceNote, title },
+    {
+      headers: instance.defaultHeaders()
+    },
+  );
+  return response.data;
+};
 
+export const deleteNote = async (id) => {
+  const response = await instance.noteService.delete(
+    `/api/notes/delete/${encodeURIComponent(id)}`,
+    {
+      headers: instance.defaultHeaders()
+    },
+  );
+  return response.data;
+};
 
+export const updateNote = async (id, { content, title }) => {
+  const response = await instance.noteService.put(
+    `/api/notes/update/${encodeURIComponent(id)}`,
+    { content, title },
+    {
+      headers: instance.defaultHeaders()
+    },
+  );
+  return response.data;
+};
+//Note APIs end
+
+//--------------Flashcards------------------
+
+export const getFlashCardDecks = async () => {
+  const response = await instance.noteService.get(`/api/notes/flashcards`, {
+    headers: instance.defaultHeaders()
+  });
+  return response.data;
+};
+
+export const createFlashCardDeck = async ({ name, cards }) => {
+  const response = await instance.noteService.post(
+    `/api/notes/flashcards`,
+    { name, cards },
+    {
+      headers: instance.defaultHeaders()
+    },
+  );
+  return response.data;
+};  
+
+export const updateFlashCardDeck = async (id, { name, cards }) => {
+  const response = await instance.noteService.put(
+    `/api/notes/flashcards/${encodeURIComponent(id)}`,
+    { name, cards },
+    {
+      headers: instance.defaultHeaders()
+    },
+  );
+  return response.data;
+};
+
+export const deleteFlashCardDeck = async (id) => {
+  const response = await instance.noteService.delete(
+    `/api/notes/flashcards/${encodeURIComponent(id)}`,
+    {
+      headers: instance.defaultHeaders()
+    },
+  );
+  return response.data;
+};
+//Flashcard APIs end
 
 //Note Service APIs end
 
+
+
 //Progress Service APIs begin
 
-//--------------Progress------------------
+//--------------Progress-----------------------
 
 
 
