@@ -173,6 +173,17 @@ export const promoteUserToAdmin = async (studentNumber) => {
   return response.data;
 };
 
+export const demoteAdminToUser = async (studentNumber) => {
+  const response = await instance.userService.post(
+    `/api/admins/demote/${encodeURIComponent(studentNumber)}`,
+    {},
+    {
+      headers: instance.defaultHeaders()
+    },
+  );
+  return response.data;
+};
+
 export const deleteAdmin = async (studentNumber) => {
   const response = await instance.userService.delete(
     `/api/admins/${encodeURIComponent(studentNumber)}`,

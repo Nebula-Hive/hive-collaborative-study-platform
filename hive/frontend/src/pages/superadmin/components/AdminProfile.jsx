@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import Icon from "@/components/ui/Icon";
 
-const AdminProfile = ({ admin, onClose, onDelete, onUpdate }) => {
+const AdminProfile = ({ admin, onClose, onDelete, onDemote, onUpdate }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
     name: admin?.name || "",
@@ -89,6 +89,12 @@ const AdminProfile = ({ admin, onClose, onDelete, onUpdate }) => {
           className="px-6 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 transition cursor-pointer"
         >
           Deactivate Admin
+        </button>
+        <button
+          onClick={() => onDemote?.(admin?.studentNumber)}
+          className="px-6 py-2 text-sm font-medium text-white bg-amber-600 rounded-md hover:bg-amber-700 transition cursor-pointer"
+        >
+          Demote to User
         </button>
         <button
           onClick={() => {

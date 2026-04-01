@@ -15,6 +15,7 @@ export {
   createAdmin,
   getAllAdmins,
   promoteUserToAdmin,
+  demoteAdminToUser,
   deleteAdmin,
   updateAdmin,
 

@@ -5,7 +5,7 @@ import Drawer from "@/components/ui/Drawer";
 import Notification from "@/components/ui/Notification";
 import AdminProfile from "@/pages/superadmin/components/AdminProfile";
 import AdminSearch from "@/pages/superadmin/components/AdminSearch";
-import { getAllAdmins, deleteAdmin, updateAdmin } from "@/services";
+import { getAllAdmins, deleteAdmin, demoteAdminToUser, updateAdmin } from "@/services";
 import PromoteUserToAdmin from "./components/PromoteUserToAdmin";
 
 function AdminManagement() {
@@ -95,6 +95,20 @@ function AdminManagement() {
     }
   };
 
+  const handleDemoteAdmin = async (studentNumber) => {
+    try {
+      const result = await demoteAdminToUser(studentNumber);
+      Notification.success("Admin demoted to user successfully");
+      if (result?.warning) {
+        Notification.warning(result.warning);
+      }
+      handleDrawerClose();
+      fetchAdmins();
+    } catch (error) {
+      Notification.error(error?.response?.data?.message || "Failed to demote admin");
+    }
+  };
+
   return (
     <>
       <div className="overflow-hidden">
@@ -111,7 +125,7 @@ function AdminManagement() {
             onClick={() => setOpenPromoteModal(true)}
           >
             <Icon icon="heroicons-outline:arrow-up" className="w-5 h-5" />
-            Promote User
+            Promote to Admin
           </button>
         </div>
 
@@ -163,6 +177,13 @@ function AdminManagement() {
                                   </button>
                                   <button
                                     type="button"
+                                    onClick={() => handleDemoteAdmin(row.studentNumber)}
+                                    className="px-3 py-1 text-xs font-medium text-white bg-amber-600 rounded hover:bg-amber-700"
+                                  >
+                                    Demote
+                                  </button>
+                                  <button
+                                    type="button"
                                     onClick={() => handleDeleteAdmin(row.studentNumber)}
                                     className="px-3 py-1 text-xs font-medium text-white bg-red-600 rounded hover:bg-red-700"
                                   >
@@ -200,6 +221,7 @@ function AdminManagement() {
             admin={selectedAdmin}
             onClose={handleDrawerClose}
             onDelete={handleDeleteAdmin}
+            onDemote={handleDemoteAdmin}
             onUpdate={handleUpdateAdmin}
           />
         )}
