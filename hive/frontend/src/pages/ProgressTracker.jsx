@@ -33,7 +33,10 @@ const GRADE_MAP = {
   "B-": 2.7,
   "C+": 2.3,
   C: 2.0,
+  "C-": 1.7,
+  "D+": 1.3,
   D: 1.0,
+  E: 0.0,
   F: 0.0,
 };
 
@@ -64,7 +67,7 @@ const getGradeColorClass = (grade = "") => {
   if (grade.startsWith("A")) return "text-success-500";
   if (grade.startsWith("B")) return "text-info-700";
   if (grade.startsWith("C")) return "text-warning-600";
-  if (grade === "D") return "text-warning-700";
+  if (grade === "D" || grade === "D+") return "text-warning-700";
   return "text-danger-500";
 };
 
