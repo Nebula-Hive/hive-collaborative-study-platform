@@ -121,7 +121,20 @@ const getStudentContext = async (uid) => {
 const getProgress = async (req, res) => {
   try {
     if (req.user.role === 'admin' || req.user.role === 'superadmin') {
-      const users = await User.find({ role: 'student', isActive: true })
+      // Get admin's own batch info
+      const adminUser = await User.findOne({ firebaseUid: req.user.uid, isActive: true })
+        .select('batch')
+        .lean();
+      
+      const adminBatch = adminUser?.batch;
+      
+      // Superadmin sees all students, admin sees only batchmates
+      let userFilter = { role: 'student', isActive: true };
+      if (req.user.role === 'admin' && adminBatch) {
+        userFilter.batch = adminBatch;
+      }
+      
+      const users = await User.find(userFilter)
         .select('name studentNumber batch firebaseUid')
         .lean();
       const progressRows = await Progress.find({}).select('userId cumulativeGPA semesters').lean();
@@ -162,6 +175,21 @@ const getProgress = async (req, res) => {
 const getProgressByUserId = async (req, res) => {
   try {
     const { userId } = req.params;
+
+    // For admin: verify target user is in same batch (unless viewing own progress)
+    if (req.user.role === 'admin' && userId !== req.user.uid) {
+      const adminUser = await User.findOne({ firebaseUid: req.user.uid, isActive: true })
+        .select('batch')
+        .lean();
+      const targetUser = await User.findOne({ firebaseUid: userId, isActive: true })
+        .select('batch')
+        .lean();
+      
+      // If target user is not in same batch, deny access
+      if (!targetUser || targetUser.batch !== adminUser?.batch) {
+        return res.status(403).json({ message: 'You do not have permission to view this student\'s progress' });
+      }
+    }
 
     const record = await Progress.findOne({ userId }).lean();
     if (!record) {
@@ -339,6 +367,21 @@ const getSummary = async (req, res) => {
     let targetUserId = req.user.uid;
 
     if ((req.user.role === 'admin' || req.user.role === 'superadmin') && req.query.userId) {
+      // For admin: verify target user is in same batch
+      if (req.user.role === 'admin') {
+        const adminUser = await User.findOne({ firebaseUid: req.user.uid, isActive: true })
+          .select('batch')
+          .lean();
+        const targetUser = await User.findOne({ firebaseUid: req.query.userId, isActive: true })
+          .select('batch')
+          .lean();
+        
+        // If target user is not in same batch, deny access
+        if (!targetUser || targetUser.batch !== adminUser?.batch) {
+          return res.status(403).json({ message: 'You do not have permission to view this student\'s progress' });
+        }
+      }
+      // Superadmin can view any user
       targetUserId = req.query.userId;
     }
 
