@@ -51,16 +51,68 @@ const userIdValidation = [
 ];
 
 const courseCodeParamValidation = [
-  param('courseCode').trim().notEmpty().withMessage('courseCode is required'),
+  param('subjectCode')
+    .optional()
+    .trim()
+    .notEmpty()
+    .withMessage('subjectCode cannot be empty'),
+  param('courseCode')
+    .optional()
+    .trim()
+    .notEmpty()
+    .withMessage('courseCode cannot be empty'),
+  body().custom((_, { req }) => {
+    if (!req.params.subjectCode && !req.params.courseCode) {
+      throw new Error('subjectCode is required');
+    }
+    return true;
+  }),
   validateRequest,
 ];
 
 const createCourseValidation = [
-  body('courseCode').trim().notEmpty().withMessage('courseCode is required'),
-  body('courseName').trim().notEmpty().withMessage('courseName is required'),
-  body('year').isInt({ min: 1, max: 4 }).withMessage('year must be between 1 and 4'),
+  body('subjectCode')
+    .optional()
+    .trim()
+    .notEmpty()
+    .withMessage('subjectCode cannot be empty'),
+  body('courseCode')
+    .optional()
+    .trim()
+    .notEmpty()
+    .withMessage('courseCode cannot be empty'),
+  body('subjectName')
+    .optional()
+    .trim()
+    .notEmpty()
+    .withMessage('subjectName cannot be empty'),
+  body('courseName')
+    .optional()
+    .trim()
+    .notEmpty()
+    .withMessage('courseName cannot be empty'),
+  body('level')
+    .optional()
+    .isInt({ min: 1, max: 4 })
+    .withMessage('level must be between 1 and 4'),
+  body('year')
+    .optional()
+    .isInt({ min: 1, max: 4 })
+    .withMessage('year must be between 1 and 4'),
   body('semester').isInt({ min: 1, max: 2 }).withMessage('semester must be 1 or 2'),
   body('status').isIn(courseStatus).withMessage('Invalid course status'),
+  body().custom((value) => {
+    if (!value.subjectCode && !value.courseCode) {
+      throw new Error('subjectCode is required');
+    }
+    if (!value.subjectName && !value.courseName) {
+      throw new Error('subjectName is required');
+    }
+    if (!value.level && !value.year) {
+      throw new Error('level is required');
+    }
+    return true;
+  }),
   body('specialisationTrack')
     .optional({ nullable: true, checkFalsy: true })
     .isIn(tracks)
@@ -69,8 +121,11 @@ const createCourseValidation = [
 ];
 
 const updateCourseValidation = [
+  body('subjectCode').optional().trim().notEmpty().withMessage('subjectCode cannot be empty'),
   body('courseCode').optional().trim().notEmpty().withMessage('courseCode cannot be empty'),
+  body('subjectName').optional().trim().notEmpty().withMessage('subjectName cannot be empty'),
   body('courseName').optional().trim().notEmpty().withMessage('courseName cannot be empty'),
+  body('level').optional().isInt({ min: 1, max: 4 }).withMessage('level must be between 1 and 4'),
   body('year').optional().isInt({ min: 1, max: 4 }).withMessage('year must be between 1 and 4'),
   body('semester').optional().isInt({ min: 1, max: 2 }).withMessage('semester must be 1 or 2'),
   body('status').optional().isIn(courseStatus).withMessage('Invalid course status'),
