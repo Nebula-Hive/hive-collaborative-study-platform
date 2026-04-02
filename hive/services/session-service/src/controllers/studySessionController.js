@@ -201,10 +201,13 @@ const createSession = async (req, res) => {
 
     let sessionBatch = null;
     if (req.user.role === "admin") {
-      if (typeof req.user.batch !== "number") {
-        return res.status(403).json({ message: "Forbidden: admin batch not assigned" });
+      if (typeof req.user.batch === "number") {
+        sessionBatch = req.user.batch;
+      } else if (Number.isInteger(batch)) {
+        sessionBatch = batch;
+      } else {
+        sessionBatch = null;
       }
-      sessionBatch = req.user.batch;
     } else if (req.user.role === "superadmin") {
       sessionBatch = Number.isInteger(batch) ? batch : null;
     }
