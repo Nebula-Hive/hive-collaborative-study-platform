@@ -7,6 +7,7 @@ import {
   deleteSession,
   getAllSessions,
   getCurrentMonthSessions,
+  getAllCourses,
   getSessionById,
   getSessionsByMonth,
   updateSession,
@@ -180,6 +181,7 @@ export default function StudySessionCalendar({ isUpcomingTasks = true, hideListV
   const [submitting, setSubmitting] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState("");
+  const [accessibleCourses, setAccessibleCourses] = useState([]);
 
   const applyUpsert = useCallback((session) => {
     setAllSessions((prev) => {
@@ -232,18 +234,20 @@ export default function StudySessionCalendar({ isUpcomingTasks = true, hideListV
     setError("");
 
     try {
-      const [all, currentMonth] = await Promise.all([
+      const [all, currentMonth, courses] = await Promise.all([
         getAllSessions(),
         getCurrentMonthSessions(),
+        isAdmin ? getAllCourses() : Promise.resolve({ courses: [] }),
       ]);
       setAllSessions((all || []).filter(isFutureOrToday).sort(sortByDateTimeAsc));
       setMonthSessions((currentMonth || []).filter(isFutureOrToday).sort(sortByDateTimeAsc));
+      setAccessibleCourses(courses?.courses || []);
     } catch (requestError) {
       setError(requestError?.response?.data?.message || "Failed to load study sessions.");
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [isAdmin]);
 
   useEffect(() => {
     loadInitialData();
@@ -329,6 +333,11 @@ export default function StudySessionCalendar({ isUpcomingTasks = true, hideListV
       return;
     }
 
+    if (!isAllowedSubjectCode(createForm.subjectCode)) {
+      toast.error("Please select a course from your accessible level.");
+      return;
+    }
+
     setSubmitting(true);
     try {
       const created = await createSession({
@@ -338,6 +347,7 @@ export default function StudySessionCalendar({ isUpcomingTasks = true, hideListV
         description: createForm.description.trim(),
         date: createForm.date,
         time: formattedTime,
+        batch: selectedCourse?.level ?? null,
       });
 
       applyUpsert(created);
@@ -359,6 +369,11 @@ export default function StudySessionCalendar({ isUpcomingTasks = true, hideListV
 
     if (!formattedTime) {
       toast.error("Please select a valid time.");
+      return;
+    }
+
+    if (!isAllowedSubjectCode(editForm.subjectCode)) {
+      toast.error("Please select a course from your accessible level.");
       return;
     }
 
@@ -418,6 +433,31 @@ export default function StudySessionCalendar({ isUpcomingTasks = true, hideListV
   const updateEditForm = (field, value) => {
     setEditForm((prev) => ({ ...prev, [field]: value }));
   };
+
+  const selectedCourse = useMemo(
+    () => accessibleCourses.find((course) => course.subjectCode === createForm.subjectCode.trim().toUpperCase()),
+    [accessibleCourses, createForm.subjectCode]
+  );
+
+  const isAllowedSubjectCode = useCallback(
+    (subjectCode) => {
+      if (!isAdmin) return true;
+
+      const normalizedCode = String(subjectCode || "").trim().toUpperCase();
+      return accessibleCourses.some((course) => course.subjectCode === normalizedCode);
+    },
+    [accessibleCourses, isAdmin]
+  );
+
+  const subjectCodeOptions = useMemo(
+    () => accessibleCourses.map((course) => ({
+      subjectCode: course.subjectCode,
+      subjectName: course.subjectName,
+      level: course.level,
+      semester: course.semester,
+    })),
+    [accessibleCourses]
+  );
 
   return (
     <div className="min-h-screen bg-primary">
@@ -590,14 +630,40 @@ export default function StudySessionCalendar({ isUpcomingTasks = true, hideListV
         <form onSubmit={handleCreateSession} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700">Subject Code</label>
-            <input
-              type="text"
-              required
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm px-3 py-2 border"
-              placeholder="e.g. SENG 41283"
-              value={createForm.subjectCode}
-              onChange={(e) => updateCreateForm("subjectCode", e.target.value)}
-            />
+            {isAdmin ? (
+              <>
+                <select
+                  required
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm px-3 py-2 border bg-white"
+                  value={createForm.subjectCode}
+                  onChange={(e) => updateCreateForm("subjectCode", e.target.value)}
+                >
+                  <option value="">Select a course</option>
+                  {subjectCodeOptions.map((course) => (
+                    <option key={course.subjectCode} value={course.subjectCode}>
+                      {course.subjectCode} - {course.subjectName} (Level {course.level}, Semester {course.semester})
+                    </option>
+                  ))}
+                </select>
+                <p className="text-xs text-gray-500 mt-1">
+                  Choose from courses available to your assigned level.
+                </p>
+              </>
+            ) : (
+              <input
+                type="text"
+                required
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm px-3 py-2 border"
+                placeholder="e.g. SENG 41283"
+                value={createForm.subjectCode}
+                onChange={(e) => updateCreateForm("subjectCode", e.target.value)}
+              />
+            )}
+            {selectedCourse && (
+              <p className="text-xs text-primary-700 mt-1">
+                {selectedCourse.subjectName} · Level {selectedCourse.level} · Semester {selectedCourse.semester}
+              </p>
+            )}
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700">Topic</label>

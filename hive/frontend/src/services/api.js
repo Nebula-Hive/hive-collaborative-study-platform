@@ -512,7 +512,7 @@ export const getSessionById = async (id) => {
 
 //--------------Admin-only Session APIs------------------//
 
-export const createSession = async ({ subjectCode, type, topic, description, date, time }) => {
+export const createSession = async ({ subjectCode, type, topic, description, date, time, batch }) => {
   return sessionPostWithFallback(
     `/api/sessions`,
     `/api/studysession/create`,
@@ -523,6 +523,7 @@ export const createSession = async ({ subjectCode, type, topic, description, dat
       description,
       date,
       time,
+      batch,
     }
   );
 };
