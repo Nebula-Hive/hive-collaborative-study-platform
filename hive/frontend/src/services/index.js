@@ -21,6 +21,7 @@ export {
   getAllCourses,
   getBatchLevels,
   getBatchLevelBatches,
+  getMyAssignedLevel,
   assignBatchLevel,
   removeBatchLevel,
 
