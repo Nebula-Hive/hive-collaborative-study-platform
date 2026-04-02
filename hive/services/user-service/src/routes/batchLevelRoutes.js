@@ -4,12 +4,14 @@ const { requireRole } = require('../middleware/roleMiddleware');
 const {
   getBatchLevels,
   getDistinctBatches,
+  getMyAssignedLevel,
   assignBatchLevel,
   removeBatchLevel,
 } = require('../controllers/batchLevelController');
 
 const router = express.Router();
 
+router.get('/batch-levels/me', authMiddleware, getMyAssignedLevel);
 router.get('/batch-levels', authMiddleware, requireRole('superadmin'), getBatchLevels);
 router.get('/batch-levels/batches', authMiddleware, requireRole('superadmin'), getDistinctBatches);
 router.post('/batch-levels', authMiddleware, requireRole('superadmin'), assignBatchLevel);

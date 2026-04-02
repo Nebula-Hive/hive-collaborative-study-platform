@@ -75,6 +75,7 @@ services:
       - PORT=3002
       - MONGO_URI=mongodb://mongo:27017/hive
       - RAG_SERVICE_URL=http://rag-service:8000
+      - USER_SERVICE_URL=http://user-service:3001
       # AWS credentials are read from .env via env_file above
       # S3_BUCKET_NAME, AWS_REGION, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY
     ports:
