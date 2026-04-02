@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
-import { getAllStudents, getAllSubjects, getAllSessions } from "@/services";
+import { getAllStudents, getAllCourses, getAllSessions } from "@/services";
 import StudySessionCalendar from "@/pages/StudySession";
 import UpcomingTasks from "@/components/UpcomingTasks";
 
@@ -28,8 +28,8 @@ export default function AdminDashboard() {
       .then((data) => setStudentCount(Array.isArray(data) ? data.length : 0))
       .catch(() => setStudentCount(0));
 
-    getAllSubjects()
-      .then((data) => setSubjects(Array.isArray(data) ? data : []))
+    getAllCourses()
+      .then((data) => setSubjects(Array.isArray(data?.courses) ? data.courses : []))
       .catch(() => setSubjects([]));
 
     const fetchTasks = async () => {
@@ -87,14 +87,14 @@ export default function AdminDashboard() {
             <UpcomingTasks tasks={tasks.slice(0, 4)} loading={loadingTasks} />
           </div>
 
-          {/* Subjects with access */}
+          {/* Courses with access */}
           <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
             <p className="text-sm font-semibold text-secondary-700 mb-3">
-              Subjects with access
+              Courses with access
             </p>
             {subjects.length === 0 ? (
               <p className="text-sm text-secondary-400 italic">
-                No subjects found.
+                No courses found.
               </p>
             ) : (
               <ul className="space-y-2">
