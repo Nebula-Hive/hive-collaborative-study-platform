@@ -36,6 +36,47 @@ const getDistinctBatches = async (req, res) => {
   }
 };
 
+const getMyAssignedLevel = async (req, res) => {
+  try {
+    const role = req.user?.role;
+
+    // Superadmin can access all levels.
+    if (role === 'superadmin') {
+      return res.json({
+        hasRestriction: false,
+        batch: req.user?.batch ?? null,
+        level: null,
+      });
+    }
+
+    const userBatch = normalizeBatch(req.user?.batch);
+    if (!userBatch) {
+      return res.status(404).json({
+        message: 'No batch found for current user',
+      });
+    }
+
+    const assignment = await BatchLevel.findOne({ batch: userBatch })
+      .select('batch level')
+      .lean();
+
+    if (!assignment) {
+      return res.status(404).json({
+        message: `No level assignment found for batch ${userBatch}`,
+      });
+    }
+
+    return res.json({
+      hasRestriction: true,
+      batch: assignment.batch,
+      level: assignment.level,
+    });
+  } catch (err) {
+    console.error('getMyAssignedLevel error', err);
+    return res.status(500).json({ message: 'Server error' });
+  }
+};
+
 const assignBatchLevel = async (req, res) => {
   try {
     const batch = normalizeBatch(req.body.batch);
@@ -143,6 +184,7 @@ const removeBatchLevel = async (req, res) => {
 module.exports = {
   getBatchLevels,
   getDistinctBatches,
+  getMyAssignedLevel,
   assignBatchLevel,
   removeBatchLevel,
 };
