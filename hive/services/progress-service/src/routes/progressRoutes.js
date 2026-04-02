@@ -30,7 +30,7 @@ const router = express.Router();
 router.get('/', authMiddleware, getProgress);
 router.get('/summary', authMiddleware, getSummary);
 router.get('/courses', authMiddleware, getCourses);
-router.get('/courses/:courseCode', authMiddleware, courseCodeParamValidation, getCourseByCode);
+router.get('/courses/:subjectCode', authMiddleware, courseCodeParamValidation, getCourseByCode);
 router.post(
   '/courses',
   authMiddleware,
@@ -39,7 +39,7 @@ router.post(
   createCourse
 );
 router.put(
-  '/courses/:courseCode',
+  '/courses/:subjectCode',
   authMiddleware,
   requireRole('superadmin'),
   courseCodeParamValidation,
@@ -47,7 +47,7 @@ router.put(
   updateCourse
 );
 router.delete(
-  '/courses/:courseCode',
+  '/courses/:subjectCode',
   authMiddleware,
   requireRole('superadmin'),
   courseCodeParamValidation,
