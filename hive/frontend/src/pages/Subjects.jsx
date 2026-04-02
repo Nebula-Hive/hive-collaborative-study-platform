@@ -83,10 +83,6 @@ export default function Subjects() {
         </div>
       </div>
 
-      <div className="bg-primary-50 text-primary-900 border border-primary-200 rounded-lg px-4 py-3 mb-6 text-sm">
-        Course management is handled in Superadmin -&gt; Course Management.
-      </div>
-
       <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4 mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>
           <label className="block text-sm font-medium text-gray-700">Search</label>
