@@ -189,17 +189,17 @@ function SemesterModal({
 
   const selectedCourses = useMemo(() => {
     const selectedSet = new Set(selectedCodes);
-    return availableCourses.filter((course) => selectedSet.has(course.courseCode));
+    return availableCourses.filter((course) => selectedSet.has(course.subjectCode));
   }, [availableCourses, selectedCodes]);
 
   const preview = useMemo(
     () =>
       calculatePreview(
         selectedCourses.map((course) => ({
-          moduleCode: course.courseCode,
-          moduleName: course.courseName,
+          moduleCode: course.subjectCode,
+          moduleName: course.subjectName,
           creditHours: course.creditHours,
-          grade: grades[course.courseCode] || "",
+          grade: grades[course.subjectCode] || "",
         }))
       ),
     [selectedCourses, grades]
@@ -245,27 +245,27 @@ function SemesterModal({
   };
 
   const renderCourseRow = (course, forceSelected = false) => {
-    const hasGrade = Boolean(grades[course.courseCode]);
-    const isSelected = forceSelected || selectedCodes.includes(course.courseCode) || hasGrade;
+    const hasGrade = Boolean(grades[course.subjectCode]);
+    const isSelected = forceSelected || selectedCodes.includes(course.subjectCode) || hasGrade;
 
     const handleGradeChange = (value) => {
       if (!forceSelected) {
-        if (value && !selectedCodes.includes(course.courseCode)) {
-          toggleCourseSelection(course.courseCode);
+        if (value && !selectedCodes.includes(course.subjectCode)) {
+          toggleCourseSelection(course.subjectCode);
         }
 
-        if (!value && selectedCodes.includes(course.courseCode)) {
-          toggleCourseSelection(course.courseCode);
+        if (!value && selectedCodes.includes(course.subjectCode)) {
+          toggleCourseSelection(course.subjectCode);
           return;
         }
       }
 
-      updateCourseGrade(course.courseCode, value);
+      updateCourseGrade(course.subjectCode, value);
     };
 
     return (
       <div
-        key={course.courseCode}
+        key={course.subjectCode}
         className="grid grid-cols-12 gap-2 items-center py-2 border-b border-slate-100 last:border-b-0"
       >
         <div className="col-span-1">
@@ -274,18 +274,18 @@ function SemesterModal({
             className="h-4 w-4"
             checked={isSelected}
             disabled={forceSelected}
-            onChange={() => toggleCourseSelection(course.courseCode)}
+            onChange={() => toggleCourseSelection(course.subjectCode)}
           />
         </div>
         <div className="col-span-5 text-sm text-secondary-800">
-          <p className="font-medium">{course.courseCode}</p>
-          <p className="text-xs text-secondary-500">{course.courseName}</p>
+          <p className="font-medium">{course.subjectCode}</p>
+          <p className="text-xs text-secondary-500">{course.subjectName}</p>
         </div>
         <div className="col-span-2 text-sm text-secondary-700">{course.creditHours} Credits</div>
         <div className="col-span-4">
           <select
             className="form-control"
-            value={grades[course.courseCode] || ""}
+            value={grades[course.subjectCode] || ""}
             onChange={(e) => handleGradeChange(e.target.value)}
           >
             <option value="">Select Grade</option>
@@ -534,14 +534,14 @@ export default function ProgressTracker() {
         const courses = response?.courses || [];
         const compulsoryCodes = courses
           .filter((course) => course.status === "compulsory")
-          .map((course) => course.courseCode);
+          .map((course) => course.subjectCode);
 
         setAvailableCourses(courses);
         setSemesterForm((prev) => ({
           ...prev,
           selectedCourseCodes: Array.from(
             new Set([...compulsoryCodes, ...(prev.selectedCourseCodes || [])])
-          ).filter((code) => courses.some((course) => course.courseCode === code)),
+          ).filter((code) => courses.some((course) => course.subjectCode === code)),
         }));
       } catch (requestError) {
         Notification.error(getErrorMessage(requestError, "Failed to load courses."));
@@ -582,7 +582,7 @@ export default function ProgressTracker() {
 
     const compulsoryCodes = availableCourses
       .filter((course) => course.status === "compulsory")
-      .map((course) => course.courseCode);
+      .map((course) => course.subjectCode);
 
     for (const compulsoryCode of compulsoryCodes) {
       if (!selectedCodes.includes(compulsoryCode)) {
@@ -664,10 +664,10 @@ export default function ProgressTracker() {
         year: toStoredYear(semesterForm.yearLevel),
         semester: Number(semesterForm.semester),
         modules: (semesterForm.selectedCourseCodes || []).map((courseCode) => {
-          const matchedCourse = availableCourses.find((course) => course.courseCode === courseCode);
+          const matchedCourse = availableCourses.find((course) => course.subjectCode === courseCode);
           return {
             moduleCode: courseCode,
-            moduleName: matchedCourse?.courseName || courseCode,
+            moduleName: matchedCourse?.subjectName || courseCode,
             creditHours: Number(matchedCourse?.creditHours || 1),
             grade: semesterForm.courseGrades[courseCode],
           };
