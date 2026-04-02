@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
-import { getAllStudents, getAllCourses, getAllSessions } from "@/services";
+import { getAllStudents, getAllCourses, getAllSessions, getMyProfile } from "@/services";
 import StudySessionCalendar from "@/pages/StudySession";
 import UpcomingTasks from "@/components/UpcomingTasks";
 
@@ -22,8 +22,27 @@ export default function AdminDashboard() {
   const [subjects, setSubjects] = useState([]);
   const [tasks, setTasks] = useState([]);
   const [loadingTasks, setLoadingTasks] = useState(true);
+  const [adminBatchLabel, setAdminBatchLabel] = useState("your assigned");
+
+  const formatBatchLabel = (batchValue) => {
+    const batchText = String(batchValue || "").trim();
+    if (!batchText) return "your assigned";
+
+    const batchYear = Number(batchText);
+    if (Number.isInteger(batchYear) && batchText.length === 4) {
+      const start = String(batchYear).slice(2);
+      const end = String(batchYear + 1).slice(2);
+      return `${start}/${end}`;
+    }
+
+    return batchText;
+  };
 
   useEffect(() => {
+    getMyProfile()
+      .then((profile) => setAdminBatchLabel(formatBatchLabel(profile?.batch)))
+      .catch(() => setAdminBatchLabel("your assigned"));
+
     getAllStudents()
       .then((data) => setStudentCount(Array.isArray(data) ? data.length : 0))
       .catch(() => setStudentCount(0));
@@ -62,7 +81,7 @@ export default function AdminDashboard() {
     <div>
       {/* Greeting */}
       <h2 className="text-lg font-semibold text-secondary-800 mb-5">
-        Hey {displayName}! 🐝 You are managing 22/23 batch for year 1 sem 2
+        Hey {displayName}! 🐝 You are managing {adminBatchLabel} batch
       </h2>
 
       {/* Main layout: calendar + sidebar */}
