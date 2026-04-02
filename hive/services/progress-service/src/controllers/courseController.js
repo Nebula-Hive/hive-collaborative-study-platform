@@ -1,15 +1,15 @@
 const Course = require('../models/Course');
 
-const normalizeCourseCode = (courseCode = '') => String(courseCode).trim().toUpperCase();
+const normalizeSubjectCode = (subjectCode = '') => String(subjectCode).trim().toUpperCase();
 
 const groupCourses = (courses = []) => {
   const groupedMap = new Map();
 
   courses.forEach((course) => {
-    const key = `${course.year}-${course.semester}`;
+    const key = `${course.level}-${course.semester}`;
     if (!groupedMap.has(key)) {
       groupedMap.set(key, {
-        year: course.year,
+        level: course.level,
         semester: course.semester,
         courses: [],
       });
@@ -18,7 +18,7 @@ const groupCourses = (courses = []) => {
   });
 
   return Array.from(groupedMap.values()).sort((a, b) => {
-    if (a.year !== b.year) return a.year - b.year;
+    if (a.level !== b.level) return a.level - b.level;
     return a.semester - b.semester;
   });
 };
@@ -27,8 +27,8 @@ const getCourses = async (req, res) => {
   try {
     const filter = { isActive: true };
 
-    if (req.query.year) {
-      filter.year = Number(req.query.year);
+    if (req.query.level || req.query.year) {
+      filter.level = Number(req.query.level || req.query.year);
     }
 
     if (req.query.semester) {
@@ -36,7 +36,7 @@ const getCourses = async (req, res) => {
     }
 
     const courses = await Course.find(filter)
-      .sort({ year: 1, semester: 1, status: 1, courseCode: 1 })
+      .sort({ level: 1, semester: 1, status: 1, subjectCode: 1 })
       .lean();
 
     return res.status(200).json({
@@ -52,8 +52,8 @@ const getCourses = async (req, res) => {
 
 const getCourseByCode = async (req, res) => {
   try {
-    const courseCode = normalizeCourseCode(req.params.courseCode);
-    const course = await Course.findOne({ courseCode, isActive: true }).lean();
+    const subjectCode = normalizeSubjectCode(req.params.subjectCode || req.params.courseCode);
+    const course = await Course.findOne({ subjectCode, isActive: true }).lean();
 
     if (!course) {
       return res.status(404).json({ message: 'Course not found' });
@@ -69,16 +69,16 @@ const getCourseByCode = async (req, res) => {
 const createCourse = async (req, res) => {
   try {
     const payload = {
-      courseCode: normalizeCourseCode(req.body.courseCode),
-      courseName: req.body.courseName,
-      year: Number(req.body.year),
+      subjectCode: normalizeSubjectCode(req.body.subjectCode || req.body.courseCode),
+      subjectName: req.body.subjectName || req.body.courseName,
+      level: Number(req.body.level || req.body.year),
       semester: Number(req.body.semester),
       status: req.body.status,
       specialisationTrack: req.body.specialisationTrack || null,
       isActive: true,
     };
 
-    const existing = await Course.findOne({ courseCode: payload.courseCode }).lean();
+    const existing = await Course.findOne({ subjectCode: payload.subjectCode }).lean();
     if (existing) {
       return res.status(409).json({ message: 'Course code already exists' });
     }
@@ -93,28 +93,32 @@ const createCourse = async (req, res) => {
 
 const updateCourse = async (req, res) => {
   try {
-    const currentCode = normalizeCourseCode(req.params.courseCode);
-    const course = await Course.findOne({ courseCode: currentCode });
+    const currentCode = normalizeSubjectCode(req.params.subjectCode || req.params.courseCode);
+    const course = await Course.findOne({ subjectCode: currentCode });
 
     if (!course) {
       return res.status(404).json({ message: 'Course not found' });
     }
 
-    const nextCode = req.body.courseCode ? normalizeCourseCode(req.body.courseCode) : currentCode;
+    const nextCode = req.body.subjectCode
+      ? normalizeSubjectCode(req.body.subjectCode)
+      : req.body.courseCode
+        ? normalizeSubjectCode(req.body.courseCode)
+        : currentCode;
 
     if (nextCode !== currentCode) {
-      const duplicate = await Course.findOne({ courseCode: nextCode }).lean();
+      const duplicate = await Course.findOne({ subjectCode: nextCode }).lean();
       if (duplicate) {
         return res.status(409).json({ message: 'Course code already exists' });
       }
-      course.courseCode = nextCode;
+      course.subjectCode = nextCode;
     }
 
-    if (typeof req.body.courseName !== 'undefined') {
-      course.courseName = req.body.courseName;
+    if (typeof req.body.subjectName !== 'undefined' || typeof req.body.courseName !== 'undefined') {
+      course.subjectName = req.body.subjectName || req.body.courseName;
     }
-    if (typeof req.body.year !== 'undefined') {
-      course.year = Number(req.body.year);
+    if (typeof req.body.level !== 'undefined' || typeof req.body.year !== 'undefined') {
+      course.level = Number(req.body.level || req.body.year);
     }
     if (typeof req.body.semester !== 'undefined') {
       course.semester = Number(req.body.semester);
@@ -140,8 +144,8 @@ const updateCourse = async (req, res) => {
 
 const deleteCourse = async (req, res) => {
   try {
-    const courseCode = normalizeCourseCode(req.params.courseCode);
-    const course = await Course.findOne({ courseCode });
+    const subjectCode = normalizeSubjectCode(req.params.subjectCode || req.params.courseCode);
+    const course = await Course.findOne({ subjectCode });
 
     if (!course) {
       return res.status(404).json({ message: 'Course not found' });
