@@ -8,7 +8,14 @@ const parseBatchFromStudentNumber = (studentNumber) => {
   return match ? parseInt(match[1], 10) : null;
 };
 
+const normalizeStudentNumber = (studentNumber) => String(studentNumber || "").trim().toUpperCase();
+
 const isAdmin = (req) => req.user?.role === 'admin';
+
+const getRequesterBatch = (req) => {
+  if (Number.isInteger(req.user?.batch)) return req.user.batch;
+  return parseBatchFromStudentNumber(req.user?.studentNumber);
+};
 
 const syncFirebaseSafely = async (firebaseUid, operation, label) => {
   if (!firebaseUid) return null;
@@ -58,26 +65,30 @@ const getAllStudents = async (req, res) => {
 const getUserById = async (req, res) => {
   try {
     const { studentNumber } = req.params;
-    const user = await User.findOne({ studentNumber }).select('-password');
+    const normalizedStudentNumber = normalizeStudentNumber(studentNumber);
+    const user = await User.findOne({ studentNumber: normalizedStudentNumber }).select('-password');
     if (!user) return res.status(404).json({ message: 'User not found' });
 
     // Allow superadmin, own profile, or admin from same batch.
-    if (
-      req.user.role !== 'superadmin' &&
-      req.user.uid !== user.firebaseUid
-    ) {
-      return res.status(403).json({ message: 'Forbidden' });
+    if (req.user.role === 'superadmin') return res.json(user);
+
+    if (req.user.uid === user.firebaseUid) return res.json(user);
+
+    if (req.user.role === 'admin') {
+      const requesterBatch = getRequesterBatch(req);
+      if (requesterBatch === null) {
+        return res.status(403).json({ message: 'Forbidden: admin batch not assigned' });
+      }
+
+      if (user.batch !== requesterBatch) {
+        return res.status(403).json({ message: 'Forbidden: different batch' });
+      }
+
+      return res.json(user);
     }
 
-    if (
-      req.user.role === 'admin' &&
-      req.user.uid !== user.firebaseUid &&
-      user.batch !== req.user.batch
-    ) {
-      return res.status(403).json({ message: 'Forbidden: different batch' });
-    }
+    return res.status(403).json({ message: 'Forbidden' });
 
-    return res.json(user);
   } catch (err) {
     console.error('getUserById error', err);
     return res.status(500).json({ message: 'Server error' });
@@ -289,10 +300,15 @@ const updateUser = async (req, res) => {
 
     const { studentNumber } = req.params;
     const { name, email, studentNumber: nextStudentNumber } = req.body;
+    const normalizedCurrentStudentNumber = normalizeStudentNumber(studentNumber);
 
-    const userQuery = { studentNumber, role: "student", isActive: true };
+    const userQuery = { studentNumber: normalizedCurrentStudentNumber, role: "student", isActive: true };
+    const requesterBatch = isAdmin(req) ? getRequesterBatch(req) : null;
     if (isAdmin(req)) {
-      userQuery.batch = req.user.batch;
+      if (requesterBatch === null) {
+        return res.status(403).json({ message: "Forbidden: admin batch not assigned" });
+      }
+      userQuery.batch = requesterBatch;
     }
 
     const user = await User.findOne(userQuery);
@@ -308,25 +324,23 @@ const updateUser = async (req, res) => {
       user.email = email;
     }
 
-    if (nextStudentNumber && nextStudentNumber !== user.studentNumber) {
-      if (isAdmin(req)) {
-        const nextBatch = parseBatchFromStudentNumber(nextStudentNumber);
-        if (nextBatch === null) {
-          return res.status(400).json({ message: "Invalid student number format" });
-        }
-        if (nextBatch !== req.user.batch) {
-          return res.status(403).json({ message: "Forbidden: cannot move user to a different batch" });
-        }
+    const normalizedNextStudentNumber = normalizeStudentNumber(nextStudentNumber);
+    const canChangeStudentNumber = req.user.role === "superadmin";
+
+    if (canChangeStudentNumber && normalizedNextStudentNumber && normalizedNextStudentNumber !== user.studentNumber) {
+      const nextBatch = parseBatchFromStudentNumber(normalizedNextStudentNumber);
+      if (nextBatch === null) {
+        return res.status(400).json({ message: "Invalid student number format" });
       }
 
       const duplicateStudentNumber = await User.findOne({
-        studentNumber: nextStudentNumber,
+        studentNumber: normalizedNextStudentNumber,
         _id: { $ne: user._id },
       }).lean();
       if (duplicateStudentNumber) {
         return res.status(400).json({ message: "Student number already exists" });
       }
-      user.studentNumber = nextStudentNumber;
+      user.studentNumber = normalizedNextStudentNumber;
     }
 
     if (name) {
