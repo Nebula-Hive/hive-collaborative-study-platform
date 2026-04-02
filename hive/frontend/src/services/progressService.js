@@ -55,7 +55,8 @@ export const getProgressSummary = async (userId) => {
 
 export const getCourses = async (params = {}) => {
   const search = new URLSearchParams();
-  if (params.year) search.set("year", String(params.year));
+  if (params.level) search.set("level", String(params.level));
+  if (params.year) search.set("level", String(params.year));
   if (params.semester) search.set("semester", String(params.semester));
 
   const suffix = search.toString() ? `?${search.toString()}` : "";
