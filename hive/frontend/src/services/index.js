@@ -18,6 +18,11 @@ export {
   demoteAdminToUser,
   deleteAdmin,
   updateAdmin,
+  getAllCourses,
+  getBatchLevels,
+  getBatchLevelBatches,
+  assignBatchLevel,
+  removeBatchLevel,
 
   getBatchChatHistory,
 
@@ -43,11 +48,6 @@ export {
 } from "./api";
 
 export {
-  createSubject,
-  getAllSubjects,
-  getSubjectByCode,
-  updateSubject,
-  deleteSubject,
   uploadResource,
   getResourcesBySubject,
   getResourceById,
