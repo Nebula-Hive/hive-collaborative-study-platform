@@ -226,6 +226,13 @@ export const getBatchLevelBatches = async () => {
   return response.data;
 };
 
+export const getMyAssignedLevel = async () => {
+  const response = await instance.userService.get(`/api/batch-levels/me`, {
+    headers: instance.defaultHeaders(),
+  });
+  return response.data;
+};
+
 export const assignBatchLevel = async ({ batch, level, confirmReplace = false }) => {
   const response = await instance.userService.post(
     `/api/batch-levels`,

@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "react-toastify";
 import { getAllCourses } from "@/services/resourceService";
+import { getMyAssignedLevel } from "@/services";
 
 const getErrorMessage = (error, fallbackMessage) => {
   const status = error?.response?.status;
@@ -23,17 +24,28 @@ export default function Subjects() {
 
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [assignedLevel, setAssignedLevel] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [levelFilter, setLevelFilter] = useState("all");
-  const [semesterFilter, setSemesterFilter] = useState("all");
 
   const loadSubjects = async () => {
     try {
       setLoading(true);
-      const response = await getAllCourses();
-      setCourses(response?.courses || []);
+      const [coursesResponse, levelResponse] = await Promise.all([
+        getAllCourses(),
+        role === "superadmin"
+          ? Promise.resolve({ hasRestriction: false, level: null })
+          : getMyAssignedLevel(),
+      ]);
+
+      setCourses(coursesResponse?.courses || []);
+      setAssignedLevel(levelResponse?.hasRestriction ? Number(levelResponse.level) : null);
     } catch (error) {
-      toast.error(getErrorMessage(error, "Failed to load courses"));
+      if (error?.response?.status === 404) {
+        setCourses([]);
+        setAssignedLevel(null);
+      } else {
+        toast.error(getErrorMessage(error, "Failed to load courses"));
+      }
     } finally {
       setLoading(false);
     }
@@ -41,7 +53,7 @@ export default function Subjects() {
 
   useEffect(() => {
     loadSubjects();
-  }, []);
+  }, [role]);
 
   const filteredCourses = useMemo(() => {
     return courses.filter((course) => {
@@ -51,13 +63,35 @@ export default function Subjects() {
         course.subjectName?.toLowerCase().includes(query) ||
         course.subjectCode?.toLowerCase().includes(query);
 
-      const matchesLevel = levelFilter === "all" || Number(course.level) === Number(levelFilter);
-      const matchesSemester =
-        semesterFilter === "all" || Number(course.semester) === Number(semesterFilter);
+      const matchesLevel = assignedLevel === null || Number(course.level) === Number(assignedLevel);
 
-      return matchesSearch && matchesLevel && matchesSemester;
+      return matchesSearch && matchesLevel;
     });
-  }, [courses, searchQuery, levelFilter, semesterFilter]);
+  }, [courses, searchQuery, assignedLevel]);
+
+  const visibleLevels = useMemo(() => {
+    return assignedLevel === null ? [1, 2, 3, 4] : [assignedLevel];
+  }, [assignedLevel]);
+
+  const coursesByLevel = useMemo(() => {
+    return visibleLevels
+      .map((level) => {
+        const semesterGroups = [1, 2]
+          .map((semester) => {
+            const semesterCourses = filteredCourses.filter(
+              (course) => Number(course.level) === level && Number(course.semester) === semester
+            );
+
+            return semesterCourses.length > 0
+              ? { semester, courses: semesterCourses }
+              : null;
+          })
+          .filter(Boolean);
+
+        return semesterGroups.length > 0 ? { level, semesterGroups } : null;
+      })
+      .filter(Boolean);
+  }, [filteredCourses, visibleLevels]);
 
   if (loading) {
     return (
@@ -83,7 +117,7 @@ export default function Subjects() {
         </div>
       </div>
 
-      <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4 mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4 mb-6 grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label className="block text-sm font-medium text-gray-700">Search</label>
           <input
@@ -94,32 +128,6 @@ export default function Subjects() {
             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm px-3 py-2 border"
           />
         </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Filter by Level</label>
-          <select
-            value={levelFilter}
-            onChange={(event) => setLevelFilter(event.target.value)}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm px-3 py-2 border"
-          >
-            <option value="all">All Levels</option>
-            <option value="1">Level 1</option>
-            <option value="2">Level 2</option>
-            <option value="3">Level 3</option>
-            <option value="4">Level 4</option>
-          </select>
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Filter by Semester</label>
-          <select
-            value={semesterFilter}
-            onChange={(event) => setSemesterFilter(event.target.value)}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm px-3 py-2 border"
-          >
-            <option value="all">All Semesters</option>
-            <option value="1">Semester 1</option>
-            <option value="2">Semester 2</option>
-          </select>
-        </div>
       </div>
 
       {filteredCourses.length === 0 ? (
@@ -128,38 +136,28 @@ export default function Subjects() {
         </div>
       ) : (
         <div className="space-y-6">
-          {[1, 2, 3, 4].map((level) => (
+          {coursesByLevel.map(({ level, semesterGroups }) => (
             <div key={level} className="bg-white rounded-lg border border-gray-200 shadow-sm p-4">
               <h2 className="text-lg font-semibold text-gray-800 mb-4">Level {level}</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {[1, 2].map((semester) => {
-                  const semesterCourses = filteredCourses.filter(
-                    (course) => Number(course.level) === level && Number(course.semester) === semester
-                  );
-
-                  return (
-                    <div key={`${level}-${semester}`} className="border border-gray-200 rounded-md p-4">
-                      <h3 className="text-sm font-semibold text-gray-700 mb-3">Semester {semester}</h3>
-                      {semesterCourses.length === 0 ? (
-                        <p className="text-sm text-gray-500 italic">No courses in this semester.</p>
-                      ) : (
-                        <div className="space-y-2">
-                          {semesterCourses.map((course) => (
-                            <button
-                              type="button"
-                              key={course.subjectCode}
-                              onClick={() => navigate(`/resources/subjects/${course.subjectCode}`)}
-                              className="w-full text-left bg-gray-50 hover:bg-gray-100 rounded-md border border-gray-200 px-3 py-2"
-                            >
-                              <p className="text-xs text-gray-500">{course.subjectCode}</p>
-                              <p className="text-sm font-medium text-gray-800">{course.subjectName}</p>
-                            </button>
-                          ))}
-                        </div>
-                      )}
+                {semesterGroups.map(({ semester, courses: semesterCourses }) => (
+                  <div key={`${level}-${semester}`} className="border border-gray-200 rounded-md p-4">
+                    <h3 className="text-sm font-semibold text-gray-700 mb-3">Semester {semester}</h3>
+                    <div className="space-y-2">
+                      {semesterCourses.map((course) => (
+                        <button
+                          type="button"
+                          key={course.subjectCode}
+                          onClick={() => navigate(`/resources/subjects/${course.subjectCode}`)}
+                          className="w-full text-left bg-gray-50 hover:bg-gray-100 rounded-md border border-gray-200 px-3 py-2"
+                        >
+                          <p className="text-xs text-gray-500">{course.subjectCode}</p>
+                          <p className="text-sm font-medium text-gray-800">{course.subjectName}</p>
+                        </button>
+                      ))}
                     </div>
-                  );
-                })}
+                  </div>
+                ))}
               </div>
             </div>
           ))}
