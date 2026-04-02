@@ -26,6 +26,7 @@ import AdminManagement from "./pages/superadmin/AdminManagement";
 import GroupManagementSuperAdmin from "./pages/superadmin/GroupsManagementSuperAdmin";
 import BatchDetails from "./pages/superadmin/BatchDetails";
 import CourseManagement from "./pages/superadmin/CourseManagement";
+import BatchLevelAssignment from "./pages/superadmin/BatchLevelAssignment";
 
 import AppLayout from "./layout/appLayout";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -71,6 +72,7 @@ export default function App() {
             <Route path="superadmin/groups" element={<GroupManagementSuperAdmin />} />
             <Route path="superadmin/groups/:batchYear" element={<BatchDetails />} />
             <Route path="superadmin/courses" element={<CourseManagement />} />
+            <Route path="superadmin/batch-levels" element={<BatchLevelAssignment />} />
           </Route>
         </Route>
       </Routes>
