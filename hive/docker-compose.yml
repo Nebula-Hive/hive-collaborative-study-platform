@@ -78,7 +78,6 @@ services:
 
   resource-service:
     build: ./services/resource-service
-    env_file: .env
     environment:
       PORT: 3002
       MONGO_URI: ${MONGO_URI}
