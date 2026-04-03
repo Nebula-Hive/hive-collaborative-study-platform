@@ -213,15 +213,15 @@ export default function Chat() {
                     <div
                       className={`max-w-[75%] rounded-2xl px-4 py-3 shadow-sm ${
                         isOwn
-                          ? "rounded-br-none bg-primary-500 text-white"
+                          ? "rounded-br-none bg-[#FFF4CC] text-[#4D3D00]"
                           : "rounded-bl-none border border-slate-200 bg-slate-50 text-slate-900"
                       }`}
                     >
-                      <div className={`mb-1 text-xs font-semibold ${isOwn ? "text-white/90" : "text-slate-600"}`}>
+                      <div className={`mb-1 text-xs font-semibold ${isOwn ? "text-[#4D3D00]/90" : "text-slate-600"}`}>
                         {msg.senderName} {msg.senderStudentNumber ? `(${msg.senderStudentNumber})` : ""}
                       </div>
                       <p className="text-sm leading-relaxed break-words whitespace-pre-wrap">{msg.content}</p>
-                      <div className={`mt-2 text-[11px] ${isOwn ? "text-white/80" : "text-slate-500"}`}>
+                      <div className={`mt-2 text-[11px] ${isOwn ? "text-[#4D3D00]/80" : "text-slate-500"}`}>
                         {formatTime(msg.timestamp)}
                       </div>
                     </div>

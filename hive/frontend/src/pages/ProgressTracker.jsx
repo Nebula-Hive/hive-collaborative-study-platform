@@ -303,13 +303,15 @@ function SemesterModal({
   const footerContent = (
     <>
       <Button text="Cancel" className="btn-outline-secondary" onClick={onClose} />
-      <Button
-        text="Save Results"
-        className="btn-primary"
+      <button
+        type="button"
+        className="btn inline-flex justify-center"
         onClick={onSubmit}
-        isLoading={isSaving}
         disabled={isSaving}
-      />
+        style={{ backgroundColor: "#FFF4CC", color: "#4D3D00" }}
+      >
+        {isSaving ? "Saving..." : "Save Results"}
+      </button>
     </>
   );
 
@@ -937,11 +939,16 @@ export default function ProgressTracker() {
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-base font-semibold text-secondary-800">Cumulative GPA Trend</h2>
               {canEdit && (
-                <Button
-                  text="Add Semester"
-                  className="btn-primary btn-sm"
-                  onClick={openAddModal}
-                />
+                <div style={{ display: "inline-block" }}>
+                  <button
+                    type="button"
+                    className="btn btn-sm inline-flex justify-center"
+                    onClick={openAddModal}
+                    style={{ backgroundColor: "#FFF4CC", color: "#4D3D00" }}
+                  >
+                    Add Semester
+                  </button>
+                </div>
               )}
             </div>
 

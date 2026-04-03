@@ -301,7 +301,14 @@ export default function CourseManagement() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-bold text-secondary-800">Course Management</h1>
-        <Button text="Add New Course" className="btn-primary btn-sm" onClick={openAddModal} />
+        <button
+          type="button"
+          className="btn btn-sm inline-flex justify-center"
+          onClick={openAddModal}
+          style={{ backgroundColor: "#FFF4CC", color: "#4D3D00" }}
+        >
+          Add New Course
+        </button>
       </div>
 
       <div className="bg-primary-50 border border-primary-200 rounded-xl px-4 py-3 text-sm text-primary-900">

@@ -236,7 +236,8 @@ export default function NotesPage() {
 
         <button
           onClick={startCreateNew}
-          className="w-full mb-4 px-4 py-3 rounded bg-primary-500 text-white text-3xl font-semibold hover:bg-primary-700 transition"
+          className="w-full mb-4 px-4 py-3 rounded text-3xl font-semibold transition hover:opacity-80"
+          style={{ backgroundColor: "#FFF4CC", color: "#4D3D00" }}
         >
           + Create New Note
         </button>
