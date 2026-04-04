@@ -68,6 +68,7 @@ jobs:
             progress-service
             session-service
             rag-service
+            frontend
           )
 
           for svc in "${services[@]}"; do
@@ -108,15 +109,15 @@ jobs:
         with:
           ref: battlefield
 
-    #   - name: Copy compose files to EC2
-    #     uses: appleboy/scp-action@v0.1.7
-    #     with:
-    #       host: ${{ secrets.EC2_HOST }}
-    #       username: ${{ secrets.EC2_USER }}
-    #       key: ${{ secrets.EC2_SSH_KEY }}
-    #       source: "hive/docker-compose.yml,hive/docker-compose.prod.yml,hive/deploy.sh"
-    #       target: "/home/ubuntu/"
-    #       strip_components: 1
+      - name: Copy compose files to EC2
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          source: "hive/docker-compose.yml,hive/docker-compose.prod.yml,hive/deploy.sh"
+          target: "/home/ubuntu/hive"
+          strip_components: 1
 
       - name: Run deploy script on EC2
         uses: appleboy/ssh-action@v1.0.3
