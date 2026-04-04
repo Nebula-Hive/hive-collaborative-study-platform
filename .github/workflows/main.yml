@@ -116,9 +116,8 @@ jobs:
 #debugging purpose
       - name: Debug env
         working-directory: hive
-        run: |
-          echo "FIREBASE_PROJECT_ID=$FIREBASE_PROJECT_ID"
-          echo "FIREBASE_CLIENT_EMAIL=$FIREBASE_CLIENT_EMAIL"
+        if: always()
+        run: env
           
       - name: Debug logs on failure
         working-directory: hive
