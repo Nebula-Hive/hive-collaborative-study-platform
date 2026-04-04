@@ -48,6 +48,132 @@ cd "$HIVE_DIR" || {
   exit 1
 }
 
+collect_changed_files() {
+  {
+    git -C "$PROJECT_ROOT" diff --name-only HEAD -- 2>/dev/null
+    git -C "$PROJECT_ROOT" diff --name-only --cached -- 2>/dev/null
+    git -C "$PROJECT_ROOT" ls-files --others --exclude-standard 2>/dev/null
+  } | awk 'NF' | sort -u
+}
+
+map_file_to_service() {
+  case "$1" in
+    hive/frontend/*)
+      echo "frontend"
+      ;;
+    hive/services/api-gateway/*)
+      echo "api-gateway"
+      ;;
+    hive/services/auth-service/*)
+      echo "auth-service"
+      ;;
+    hive/services/chat-service/*)
+      echo "chat-service"
+      ;;
+    hive/services/note-service/*)
+      echo "note-service"
+      ;;
+    hive/services/progress-service/*)
+      echo "progress-service"
+      ;;
+    hive/services/rag-service/*)
+      echo "rag-service"
+      ;;
+    hive/services/resource-service/*)
+      echo "resource-service"
+      ;;
+    hive/services/session-service/*)
+      echo "session-service"
+      ;;
+    hive/services/user-service/*)
+      echo "user-service"
+      ;;
+    hive/frontend/package.json|hive/frontend/Dockerfile)
+      echo "frontend"
+      ;;
+    hive/services/api-gateway/package.json|hive/services/api-gateway/Dockerfile)
+      echo "api-gateway"
+      ;;
+    hive/services/auth-service/package.json|hive/services/auth-service/Dockerfile)
+      echo "auth-service"
+      ;;
+    hive/services/chat-service/package.json|hive/services/chat-service/Dockerfile)
+      echo "chat-service"
+      ;;
+    hive/services/note-service/package.json|hive/services/note-service/Dockerfile)
+      echo "note-service"
+      ;;
+    hive/services/progress-service/package.json|hive/services/progress-service/Dockerfile)
+      echo "progress-service"
+      ;;
+    hive/services/rag-service/requirements.txt|hive/services/rag-service/Dockerfile)
+      echo "rag-service"
+      ;;
+    hive/services/resource-service/package.json|hive/services/resource-service/Dockerfile)
+      echo "resource-service"
+      ;;
+    hive/services/session-service/package.json|hive/services/session-service/Dockerfile)
+      echo "session-service"
+      ;;
+    hive/services/user-service/package.json|hive/services/user-service/Dockerfile)
+      echo "user-service"
+      ;;
+    hive/docker-compose.yml|hive/.env|hive/.env.example)
+      echo "__full_stack__"
+      ;;
+  esac
+}
+
+compose_targets=()
+compose_mode="plain"
+
+target_exists() {
+  local candidate
+  for candidate in "${compose_targets[@]}"; do
+    if [ "$candidate" = "$1" ]; then
+      return 0
+    fi
+  done
+  return 1
+}
+
+build_start_plan() {
+  local changed_files file service
+  changed_files="$(collect_changed_files)"
+  compose_targets=()
+  compose_mode="plain"
+
+  if [ -z "$changed_files" ]; then
+    return
+  fi
+
+  while IFS= read -r file; do
+    [ -n "$file" ] || continue
+    service="$(map_file_to_service "$file")"
+    case "$service" in
+      __full_stack__)
+        compose_mode="full"
+        compose_targets=()
+        return
+        ;;
+      "")
+        continue
+        ;;
+      *)
+        if ! target_exists "$service"; then
+          compose_targets+=("$service")
+        fi
+        ;;
+    esac
+  done <<EOF
+$changed_files
+EOF
+
+  if [ ${#compose_targets[@]} -gt 0 ]; then
+    compose_mode="targeted"
+  fi
+}
+
 # Check if .env file exists
 if [ ! -f .env ]; then
   echo -e "${YELLOW}⚠ Warning: .env file not found${NC}"
@@ -68,19 +194,32 @@ echo -e "${BLUE}║                   Starting Services                      ║
 echo -e "${BLUE}╚══════════════════════════════════════════════════════════╝${NC}"
 echo ""
 
-# Stop any existing containers
-echo -e "${YELLOW}Stopping any existing containers...${NC}"
-docker compose down --remove-orphans > /dev/null 2>&1
-echo -e "${GREEN}✓ Cleaned up existing containers${NC}"
-echo ""
-
 # Start services
-echo -e "${YELLOW}Starting all services with Docker Compose...${NC}"
+build_start_plan
+
+if [ "$compose_mode" = "targeted" ]; then
+  echo -e "${YELLOW}Starting only changed services with Docker Compose...${NC}"
+elif [ "$compose_mode" = "full" ]; then
+  echo -e "${YELLOW}Starting the full stack because shared config changed...${NC}"
+else
+  echo -e "${YELLOW}Starting services without rebuilding images...${NC}"
+fi
+
 echo -e "${BLUE}This may take a few minutes on first run...${NC}"
 echo ""
 
 start_compose() {
-  docker compose up -d --build
+  case "$compose_mode" in
+    full)
+      docker compose up -d --build
+      ;;
+    targeted)
+      docker compose up -d --build --no-deps "${compose_targets[@]}"
+      ;;
+    *)
+      docker compose up -d
+      ;;
+  esac
 }
 
 start_compose
@@ -91,6 +230,7 @@ if [ "$compose_status" -ne 0 ]; then
   echo -e "${YELLOW}Initial start failed; retrying after a clean shutdown...${NC}"
   docker compose down --remove-orphans > /dev/null 2>&1
   sleep 3
+  compose_mode="full"
   start_compose
   compose_status=$?
 fi
