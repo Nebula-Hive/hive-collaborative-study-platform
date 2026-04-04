@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import {
   onAuthStateChanged,
+  onIdTokenChanged,
   signInWithEmailAndPassword,
   signOut,
 } from "firebase/auth";
@@ -22,6 +23,7 @@ const getErrorMessage = (error, fallbackMessage) => {
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
+  const [token, setToken] = useState(localStorage.getItem(TOKEN_KEY));
   const [role, setRole] = useState("student");
   const [viewMode, setViewMode] = useState("student");
   const [loading, setLoading] = useState(true);
@@ -41,12 +43,14 @@ export const AuthProvider = ({ children }) => {
 
   const clearSession = async () => {
     localStorage.removeItem(TOKEN_KEY);
+    setToken(null);
     setAuthState(null, null);
   };
 
   const syncSessionFromFirebaseUser = async (firebaseUser) => {
     const idToken = await firebaseUser.getIdToken();
     localStorage.setItem(TOKEN_KEY, idToken);
+    setToken(idToken);
 
     const verifiedUser = await verifyToken(idToken);
     setAuthState(firebaseUser, verifiedUser);
@@ -76,6 +80,26 @@ export const AuthProvider = ({ children }) => {
     return () => unsub();
   }, []);
 
+  useEffect(() => {
+    const unsub = onIdTokenChanged(auth, async (currentUser) => {
+      if (!currentUser) {
+        localStorage.removeItem(TOKEN_KEY);
+        setToken(null);
+        return;
+      }
+
+      try {
+        const freshToken = await currentUser.getIdToken();
+        localStorage.setItem(TOKEN_KEY, freshToken);
+        setToken(freshToken);
+      } catch (error) {
+        // Keep current session state; auth state listener handles hard failures.
+      }
+    });
+
+    return () => unsub();
+  }, []);
+
   const signup = async ({ name, email, password, studentNumber }) => {
     try {
       await registerUser({ name, email, password, studentNumber });
@@ -90,8 +114,8 @@ export const AuthProvider = ({ children }) => {
   const login = async ({ email, password }) => {
     try {
       const credential = await signInWithEmailAndPassword(auth, email, password);
-      await syncSessionFromFirebaseUser(credential.user);
-      return credential.user;
+      const verifiedUser = await syncSessionFromFirebaseUser(credential.user);
+      return verifiedUser;
     } catch (error) {
       throw new Error(getErrorMessage(error, "Login failed"));
     }
@@ -133,9 +157,9 @@ export const AuthProvider = ({ children }) => {
       logout,
       refreshAuthUser,
       toggleViewMode,
-      token: localStorage.getItem(TOKEN_KEY),
+      token,
     }),
-    [user, role, viewMode, loading]
+    [user, token, role, viewMode, loading]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

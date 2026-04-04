@@ -16,8 +16,6 @@ import StudySession from "./pages/StudySession";
 import Profile from "./pages/Profile";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
-
-import NewAdmin from "./pages/superadmin/NewAdmin";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import UserManagement from "./pages/admin/UserManagement";
 import GroupManagement from "./pages/admin/GroupManagement";
@@ -26,6 +24,9 @@ import SuperAdminDashboard from "./pages/superadmin/SuperAdminDashboard";
 import UserManagementSuperAdmin from "./pages/superadmin/UserManagementSuperAdmin";
 import AdminManagement from "./pages/superadmin/AdminManagement";
 import GroupManagementSuperAdmin from "./pages/superadmin/GroupsManagementSuperAdmin";
+import BatchDetails from "./pages/superadmin/BatchDetails";
+import CourseManagement from "./pages/superadmin/CourseManagement";
+import BatchLevelAssignment from "./pages/superadmin/BatchLevelAssignment";
 
 import AppLayout from "./layout/appLayout";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -69,6 +70,9 @@ export default function App() {
             <Route path="superadmin/users" element={<UserManagementSuperAdmin />} />
             <Route path="superadmin/admins" element={<AdminManagement />} />
             <Route path="superadmin/groups" element={<GroupManagementSuperAdmin />} />
+            <Route path="superadmin/groups/:batchYear" element={<BatchDetails />} />
+            <Route path="superadmin/courses" element={<CourseManagement />} />
+            <Route path="superadmin/batch-levels" element={<BatchLevelAssignment />} />
           </Route>
         </Route>
       </Routes>

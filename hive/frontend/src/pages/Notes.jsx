@@ -3,235 +3,172 @@ import { FaSearch, FaPaperPlane, FaEllipsisV } from "react-icons/fa";
 import { AiOutlineClose } from "react-icons/ai";
 import { HiDocumentText } from "react-icons/hi";
 import { RiVoiceprintLine } from "react-icons/ri";
-import { useAuth } from "@/context/AuthContext";
-import axios from "axios";
 
 export default function NotesPage() {
   const { user, token, loading } = useAuth();
-const [showSearch, setShowSearch] = useState(false);
-const [searchText, setSearchText] = useState("");
+  const [showSearch, setShowSearch] = useState(false);
+  const [searchText, setSearchText] = useState("");
   const [notes, setNotes] = useState([]);
   const [selectedNote, setSelectedNote] = useState(null);
   const [editText, setEditText] = useState("");
+  const [editTopic, setEditTopic] = useState("");
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [isCreatingNew, setIsCreatingNew] = useState(false);
+  const [newTopic, setNewTopic] = useState("");
   const [showMenuId, setShowMenuId] = useState(null);
-const [showEditPopup, setShowEditPopup] = useState(false);
-const [editPopupText, setEditPopupText] = useState("");
   const [text, setText] = useState("");
-  const [showSend, setShowSend] = useState(false);
   const [isListening, setIsListening] = useState(false);
+
 
   const recognitionRef = useRef(null);
 
-const filteredNotes = notes.filter((note) =>
-  (note.title || note.content)
-    .toLowerCase()
-    .includes(searchText.toLowerCase())
-);
+  const getAutoTopic = (content = "") =>
+    content.trim().split(/\s+/).slice(0, 4).join(" ");
 
-  const api = axios.create({
-    baseURL: "http://localhost:3004/api/notes",
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  const filteredNotes = notes.filter((note) =>
+    (note.title || note.content)
+      .toLowerCase()
+      .includes(searchText.toLowerCase()),
+  );
 
   // Fetch notes when user loads
   useEffect(() => {
-    if (!loading && user) fetchNotes();
-  }, [loading, user]);
+    if (!loading && user && token) fetchNotesData();
+  }, [loading, user, token]);
 
-  const fetchNotes = async () => {
+  useEffect(() => {
+    if (!selectedNote) return;
+    setEditText(selectedNote.content || "");
+    setEditTopic(selectedNote.title || getAutoTopic(selectedNote.content));
+  }, [selectedNote]);
+
+  const fetchNotesData = async () => {
     try {
-      const res = await api.get("/");
-      setNotes(res.data);
-      if (res.data.length > 0) {
-        setSelectedNote(res.data[0]);
-        setEditText(res.data[0].content);
+      const res = await getNotes();
+      setNotes(res);
+      if (res.length > 0) {
+        setSelectedNote(res[0]);
       }
     } catch (err) {
-      console.error(err);
+      console.error("Error fetching notes:", err);
     }
   };
 
   const selectNote = (note) => {
     setSelectedNote(note);
-    setEditText(note.content);
+    setIsEditMode(false);
+    setIsCreatingNew(false);
+  };
+
+  const openEditNote = (note) => {
+    setSelectedNote(note);
+    setEditTopic(note.title || getAutoTopic(note.content));
+    setEditText(note.content || "");
+    setIsCreatingNew(false);
+    setIsEditMode(true);
+  };
+
+  const startCreateNew = () => {
+    setSelectedNote(null);
+    setIsEditMode(false);
+    setIsCreatingNew(true);
+    setNewTopic("");
+    setText("");
+  };
+
+  const cancelCreate = () => {
+    setIsCreatingNew(false);
+    setNewTopic("");
+    setText("");
+    setIsListening(false);
+    recognitionRef.current?.stop();
   };
 
   // Start voice recognition
-const startVoice = () => {
-  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SpeechRecognition) return alert("Voice recognition not supported");
+  const startVoice = () => {
+    const SpeechRecognition =
+      window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) return alert("Voice recognition not supported");
 
-  setIsListening(true);
+    setIsListening(true);
 
-  recognitionRef.current = new SpeechRecognition();
-  recognitionRef.current.continuous = true;
-  recognitionRef.current.interimResults = true;
-  recognitionRef.current.lang = "en-US";
+    recognitionRef.current = new SpeechRecognition();
+    recognitionRef.current.continuous = true;
+    recognitionRef.current.interimResults = true;
 
-  let finalTranscript = text; // start with current text
+    let finalTranscript = text; // start with current text
 
-  recognitionRef.current.onresult = (event) => {
-    let interimTranscript = "";
-    for (let i = event.resultIndex; i < event.results.length; i++) {
-      const transcript = event.results[i][0].transcript;
-      if (event.results[i].isFinal) {
-        finalTranscript += transcript + " "; // append only final
-      } else {
-        interimTranscript += transcript;
+    recognitionRef.current.onresult = (event) => {
+      let interimTranscript = "";
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const transcript = event.results[i][0].transcript;
+        if (event.results[i].isFinal) {
+          finalTranscript += transcript + " "; // append only final
+        } else {
+          interimTranscript += transcript;
+        }
       }
-    }
-    setText(finalTranscript + interimTranscript); // show both final + interim
+      setText(finalTranscript + interimTranscript); // show both final + interim
+    };
+
+    recognitionRef.current.onerror = (err) => console.error(err);
+
+    recognitionRef.current.onend = () => {
+      setShowSend(true); 
+    };
   };
-
-  recognitionRef.current.onerror = (err) => console.error(err);
-
-  recognitionRef.current.onend = () => {
-    if (isListening) recognitionRef.current.start(); // auto-restart
-    else setShowSend(true);
-  };
-
-  recognitionRef.current.start();
-};
   const stopVoice = () => {
     setIsListening(false);
     recognitionRef.current?.stop();
   };
 
-  // Create note from voice/text
-  const createNote = async () => {
+  // Create note from voice/text - using dynamic API from @/services
+  const saveNewNote = async () => {
     if (!text.trim()) return;
-    try {
-      const res = await api.post("/create", { content: text, isVoiceNote: true });
-      setNotes([...notes, res.data]);
-      setText("");
-      setShowSend(false);
-    } catch (err) {
-      console.error(err);
-    }
+
+    setNotes([...notes, text]);
+    setText("");
+    setShowSend(false);
   };
 
-  const updateNote = async (id, newContent) => {
-    try {
-      const res = await api.put(`/update/${id}`, { content: newContent });
-      setNotes(notes.map((n) => (n._id === id ? res.data : n)));
-      setSelectedNote(res.data);
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  const deleteNote = async (id) => {
-    try {
-      await api.delete(`/delete/${id}`);
-      const filtered = notes.filter((n) => n._id !== id);
-      setNotes(filtered);
-      if (selectedNote?._id === id) setSelectedNote(filtered[0] || null);
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-const renameNote = async (note) => {
-  const newTitle = prompt("Enter new title", note.title || "");
-  if (!newTitle) return;
-
-  try {
-    const res = await api.put(`/update/${note._id}`, { title: newTitle }); // send only title
-    setNotes(notes.map((n) => (n._id === note._id ? res.data : n))); // update local state
-    if (selectedNote?._id === note._id) setSelectedNote(res.data); // update selected note if needed
-  } catch (err) {
-    console.error(err);
-  }
-};
-useEffect(() => {
-  const handleClickOutside = () => {
-    setShowMenuId(null);
-  };
-
-  window.addEventListener("click", handleClickOutside);
-
-  return () => {
-    window.removeEventListener("click", handleClickOutside);
-  };
-}, []);
   return (
     <div className="flex h-screen bg-primary">
+
       {/* Sidebar */}
-      <div className="w-65 border-r border-gray-300 p-5 overflow-y-auto">
+      <div className="w-65 border-r border-gray-300 p-5">
+
         <div className="flex justify-between items-center mb-4">
-          <h1 className="font-semibold text-gray-700 text-lg">My Notes</h1>
-          {/* <FaSearch className="text-gray-600 cursor-pointer" /> */}
-          <FaSearch
-  className="text-gray-600 cursor-pointer"
-  onClick={() => setShowSearch(true)}
-/>
+          <h1 className="font-semibold text-gray-700 text-lg">
+            My Notes
+          </h1>
+          <FaSearch className="text-gray-600 cursor-pointer" />
         </div>
+
+        <button
+          onClick={startCreateNew}
+          className="w-full mb-4 px-4 py-3 rounded bg-primary-500 text-white text-3xl font-semibold hover:bg-primary-700 transition"
+        >
+          + Create New Note
+        </button>
 
         <hr className="mb-4" />
 
-        <div className="space-y-4">
-          {/* {notes.map((note) => ( */}
+        <div className="space-y-2">
           {filteredNotes.map((note) => (
             <div key={note._id} className="relative group">
               <div
-                className={`flex items-center justify-between text-gray-700 p-2 rounded cursor-pointer hover:bg-gray-100 ${
-                  selectedNote?._id === note._id ? "bg-gray-200" : ""
-                }`}
-        onClick={() => {
-    selectNote(note);
-    setShowMenuId(null);
-  }}
-              >
-                {showSearch && (
-  <div className="fixed inset-0 flex items-start justify-center pt-20 z-50">
-    <div className="bg-white rounded-lg shadow-lg w-[350px] p-4 border">
-      <div className="flex items-center justify-between mb-2">
-        <h2 className="font-semibold text-gray-700 text-sm">Search Notes</h2>
-        <button
-          onClick={() => setShowSearch(false)}
-          className="text-gray-600 hover:text-gray-800"
-        >
-          <AiOutlineClose />
-        </button>
-      </div>
-
-      <input
-        type="text"
-        placeholder="Type to search..."
-        value={searchText}
-        onChange={(e) => setSearchText(e.target.value)}
-        className="w-full px-3 py-2 border rounded outline-none"
-        autoFocus
-      />
-
-      {searchText && (
-        <div className="mt-2 max-h-40 overflow-y-auto">
-          {filteredNotes.length > 0 ? (
-            filteredNotes.map((note) => (
-              <div
-                key={note._id}
-                className="p-2 hover:bg-gray-100 cursor-pointer rounded text-sm"
+                className="flex items-center justify-between text-gray-700 p-3 rounded cursor-pointer hover:bg-gray-100"
                 onClick={() => {
-                  selectNote(note);
-                  setShowSearch(false);
-                  setSearchText(""); 
+                  openEditNote(note);
+                  setShowMenuId(null);
                 }}
               >
-                {note.title || note.content.split(" ").slice(0, 3).join(" ")}
-              </div>
-            ))
-          ) : (
-            <p className="text-gray-500 text-sm">No results found</p>
-          )}
-        </div>
-      )}
-    </div>
-  </div>
-)}
-                <div className="flex items-center gap-3">
-                  <HiDocumentText className="text-gray-600 text-lg" />
-      <span className="text-sm truncate">{note.title || note.content.split(" ").slice(0, 3).join(" ")}</span>
-
+                <div className="flex items-center gap-3 min-w-0">
+                  <HiDocumentText className="text-gray-600 text-lg shrink-0" />
+                  <span className="text-3xl truncate">
+                    {note.title ||
+                      note.content.split(" ").slice(0, 4).join(" ")}
+                  </span>
                 </div>
 
                 <button
@@ -251,10 +188,10 @@ useEffect(() => {
                     className="px-4 py-2 text-left hover:bg-gray-100"
                     onClick={() => {
                       setShowMenuId(null);
-                      selectNote(note);
+                      openEditNote(note);
                     }}
                   >
-                    View
+                    Edit
                   </button>
                   <button
                     className="px-4 py-2 text-left hover:bg-gray-100"
@@ -269,7 +206,7 @@ useEffect(() => {
                     className="px-4 py-2 text-left hover:bg-gray-100 text-red-500"
                     onClick={() => {
                       setShowMenuId(null);
-                      deleteNote(note._id);
+                      handleDeleteNote(note._id);
                     }}
                   >
                     Delete
@@ -278,120 +215,182 @@ useEffect(() => {
               )}
             </div>
           ))}
+
+          {filteredNotes.length === 0 && (
+            <p className="text-gray-500">
+              No notes yet. Click Create New Note.
+            </p>
+          )}
         </div>
       </div>
 
-      {/* Main area */}
-      <div className="flex-1 relative flex flex-col p-6">
-       
-{showEditPopup && (
-  <div className="fixed inset-0 flex items-center justify-center z-50 bg-transparent bg-opacity-30">
-    <div className="bg-white rounded-lg shadow-lg w-[500px] p-6 border">
-      <h2 className="text-lg font-semibold mb-3">Edit Note</h2>
-
-      <textarea
-        value={editPopupText}
-        onChange={(e) => setEditPopupText(e.target.value)}
-        className="w-full h-48 p-3 border rounded resize-none"
-      />
-
-      <div className="mt-4 flex justify-end gap-3">
-        <button
-          onClick={() => setShowEditPopup(false)}
-          className="px-4 py-2 border rounded hover:bg-gray-100"
-        >
-          Cancel
-        </button>
-        <button
-          onClick={() => {
-            updateNote(selectedNote._id, editPopupText);
-            setEditText(editPopupText);
-            setShowEditPopup(false);
-          }}
-          className="px-4 py-2 bg-primary-500 text-white rounded hover:bg-primary-700"
-        >
-          Save
-        </button>
-      </div>
-    </div>
-  </div>
-)}
-
-        {selectedNote ? (
-          <>
-   <span className="text-2xl font-semibold mb-2 block">
-
-    
-      {selectedNote.title ||
-        selectedNote.content.split(" ").slice(0, 3).join(" ")}
-    </span>
-          <button
-        className="absolute top-2 right-2 bg-primary-500 text-white px-3 py-1 rounded hover:bg-primary-700"
-        onClick={() => {
-          setEditPopupText(editText);
-          setShowEditPopup(true);
-        }}
-      >
-        Edit
-      </button>
-          <textarea
-            className="w-full flex-1 p-4 text-gray-900 bg-white rounded-md  resize-none overflow-auto"
-            value={editText}
-            onChange={(e) => setEditText(e.target.value)}
-            onBlur={() => updateNote(selectedNote._id, editText)}
-            style={{ minHeight: "6rem", maxHeight: "70vh" }}
-          />
-          </>
-        ) : (
-          <p className="text-gray-500">Select a note to view</p>
-        )}
- 
-        {/* Voice-to-text input */}
-        <div className="mt-4 flex justify-center w-full">
-          <div className="flex items-center w-full">
-            <textarea
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              placeholder="Voice to text ..."
-              className="w-full pt-2 rounded-4xl border border-gray-400 px-6 bg-transparent overflow-auto"
-              style={{
-                minHeight: "1rem",
-                maxHeight: "100rem",
-                resize: "vertical",
-              }}
-              ref={(el) => {
-                if (el) {
-                  el.style.height = "auto";
-                  el.style.height = `${el.scrollHeight}px`;
-                }
-              }}
-            />
-
-            {isListening ? (
+      {showSearch && (
+        <div className="fixed inset-0 flex items-start justify-center pt-20 z-50">
+          <div className="bg-white rounded-lg shadow-lg w-[350px] p-4 border">
+            <div className="flex items-center justify-between mb-2">
+              <h2 className="font-semibold text-gray-700 text-sm">
+                Search Notes
+              </h2>
               <button
-                onClick={stopVoice}
-                className="ml-4 w-12 h-12 flex items-center justify-center rounded-full bg-red-600"
+                onClick={() => setShowSearch(false)}
+                className="text-gray-600 hover:text-gray-800"
               >
                 <AiOutlineClose />
               </button>
-            ) : !showSend ? (
-              <button
-                onClick={startVoice}
-                className="ml-4 w-12 h-12 flex items-center justify-center rounded-full bg-gray-800"
-              >
-                <RiVoiceprintLine className="text-yellow-400 text-lg" />
-              </button>
-            ) : (
-              <button
-                onClick={createNote}
-                className="ml-4 w-12 h-12 flex items-center justify-center rounded-full bg-green-600"
-              >
-                <FaPaperPlane className="text-white text-lg" />
-              </button>
+            </div>
+
+            <input
+              type="text"
+              placeholder="Type to search..."
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+              className="w-full px-3 py-2 border rounded outline-none"
+              autoFocus
+            />
+
+            {searchText && (
+              <div className="mt-2 max-h-40 overflow-y-auto">
+                {filteredNotes.length > 0 ? (
+                  filteredNotes.map((note) => (
+                    <div
+                      key={note._id}
+                      className="p-2 hover:bg-gray-100 cursor-pointer rounded text-sm"
+                      onClick={() => {
+                        openEditNote(note);
+                        setShowSearch(false);
+                        setSearchText("");
+                      }}
+                    >
+                      {note.title ||
+                        note.content.split(" ").slice(0, 4).join(" ")}
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-gray-500 text-sm">No results found</p>
+                )}
+              </div>
             )}
           </div>
         </div>
-      </div>
+      )}
+
+      {isCreatingNew && (
+        <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-lg border w-full max-w-3xl p-5">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold text-gray-800">
+                Create New Note
+              </h2>
+              <button
+                onClick={cancelCreate}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <AiOutlineClose />
+              </button>
+            </div>
+
+            <input
+              type="text"
+              value={newTopic}
+              onChange={(e) => setNewTopic(e.target.value)}
+              placeholder="Topic (optional)"
+              className="w-full mb-3 rounded-xl border border-gray-300 px-4 py-2"
+            />
+
+            <div className="flex items-center w-full">
+              <textarea
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+                placeholder="Type or use voice to create a note..."
+                className="w-full p-4 rounded-xl border border-gray-400 bg-transparent overflow-auto"
+                style={{ minHeight: "10rem", resize: "vertical" }}
+              />
+
+              {isListening ? (
+                <button
+                  onClick={stopVoice}
+                  className="ml-3 w-11 h-11 flex items-center justify-center rounded-full bg-red-600 hover:bg-red-700 transition"
+                >
+                  <AiOutlineClose className="text-white" />
+                </button>
+              ) : (
+                <button
+                  onClick={startVoice}
+                  className="ml-3 w-11 h-11 flex items-center justify-center rounded-full bg-gray-800 hover:bg-gray-900 transition"
+                >
+                  <RiVoiceprintLine className="text-yellow-400 text-lg" />
+                </button>
+              )}
+            </div>
+
+            <div className="mt-4 flex justify-end gap-2">
+              <button
+                onClick={cancelCreate}
+                className="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={saveNewNote}
+                disabled={!text.trim()}
+                className={`px-4 py-2 rounded font-medium transition ${
+                  text.trim()
+                    ? "bg-primary-500 text-white hover:bg-primary-700"
+                    : "bg-gray-200 text-gray-500 cursor-not-allowed"
+                }`}
+              >
+                Create Note
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {isEditMode && selectedNote && (
+        <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-lg border w-full max-w-3xl p-5">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold text-gray-800">Edit Note</h2>
+              <button
+                onClick={cancelEdit}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <AiOutlineClose />
+              </button>
+            </div>
+
+            <label className="block text-sm text-gray-600 mb-1">Topic</label>
+            <input
+              type="text"
+              value={editTopic}
+              onChange={(e) => setEditTopic(e.target.value)}
+              className="w-full mb-3 rounded-xl border border-gray-300 px-4 py-2 font-semibold"
+            />
+
+            <textarea
+              className="w-full p-4 text-gray-900 bg-white rounded-md border border-gray-300 resize-none overflow-auto"
+              value={editText}
+              onChange={(e) => setEditText(e.target.value)}
+              style={{ minHeight: "12rem", maxHeight: "60vh" }}
+            />
+
+            <div className="mt-4 flex justify-end gap-2">
+              <button
+                className="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300"
+                onClick={cancelEdit}
+              >
+                Cancel
+              </button>
+              <button
+                className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+                onClick={saveCurrentNote}
+              >
+                Save
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
