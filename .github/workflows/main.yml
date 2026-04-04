@@ -113,6 +113,10 @@ jobs:
         run: |
           docker compose -f docker-compose.yml -f docker-compose.override.ci.yml exec -T frontend npm install
           docker compose -f docker-compose.yml -f docker-compose.override.ci.yml exec -T frontend npx cypress run
+#debugging purpose
+      - name: Debug logs on failure
+        if: failure()
+        run: docker compose -f docker-compose.yml -f docker-compose.override.ci.yml logs
 
       # Step 9: Tear down CI services
       - name: Tear down CI
