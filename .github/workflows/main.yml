@@ -1,88 +1,74 @@
-# .github/workflows/ci.yml
-
-name: CI
+name: Full Stack CI
 
 on:
   workflow_dispatch:
-    inputs:
-      branch:
-        description: 'Branch to run workflow on'
-        required: true
-        default: 'staging-grounds'
 
 jobs:
-  test-compose:
-    name: Docker Compose Smoke Test
+  ci:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    services:
+      docker:
+        image: docker:24.0.6-dind
+        options: --privileged
+        ports:
+          - 2375:2375
 
     steps:
       # Step 1: Checkout
-      - name: Checkout code
-        uses: actions/checkout@v6.0.2
-        with:
-          ref: ${{ github.event.inputs.branch }}    
+      - uses: actions/checkout@v4
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v4.0.0
+      # Step 2: Set up Docker Buildx
+      - uses: docker/setup-buildx-action@v3
 
-      - name: Create .env file from secrets & variables
-        working-directory: hive
-        run: |
-          cat <<EOF > .env
-          # Mongo
-          MONGO_URI=${{ secrets.MONGO_URI }}
+    #   # Step 3: Login to Docker
+    #   - uses: docker/login-action@v3
+    #     with:
+    #       username: ${{ secrets.DOCKER_USERNAME }}
+    #       password: ${{ secrets.DOCKER_PASSWORD }}
 
-          # Firebase (backend services)
-          FIREBASE_PROJECT_ID=${{ vars.FIREBASE_PROJECT_ID }}
-          FIREBASE_CLIENT_EMAIL=${{ secrets.FIREBASE_CLIENT_EMAIL }}
-          FIREBASE_PRIVATE_KEY=${{ secrets.FIREBASE_PRIVATE_KEY }}
-
-          # RAG
-          RAG_SERVICE_URL=${{ vars.RAG_SERVICE_URL }}
-
-          # Firebase (frontend / Vite)
-          VITE_FIREBASE_API_KEY=${{ secrets.VITE_FIREBASE_API_KEY }}
-          VITE_FIREBASE_AUTH_DOMAIN=${{ vars.VITE_FIREBASE_AUTH_DOMAIN }}
-          VITE_FIREBASE_PROJECT_ID=${{ vars.FIREBASE_PROJECT_ID }}
-          VITE_FIREBASE_STORAGE_BUCKET=${{ vars.VITE_FIREBASE_STORAGE_BUCKET }}
-          VITE_FIREBASE_MESSAGING_SENDER_ID=${{ vars.VITE_FIREBASE_MESSAGING_SENDER_ID }}
-          VITE_FIREBASE_APP_ID=${{ secrets.VITE_FIREBASE_APP_ID }}
-          VITE_FIREBASE_MEASUREMENT_ID=${{ vars.VITE_FIREBASE_MEASUREMENT_ID }}
-          VITE_API_GATEWAY_URL=${{ vars.VITE_API_GATEWAY_URL }}
-          VITE_BASE_URL=${{ vars.VITE_BASE_URL }}
-          EOF
-
+      # Step 4: Build all CI images
       - name: Build CI images
-        working-directory: hive
         run: docker compose -f docker-compose.yml -f docker-compose.override.ci.yml build
 
+      # Step 5: Start CI services
       - name: Start CI services
-        working-directory: hive
         run: docker compose -f docker-compose.yml -f docker-compose.override.ci.yml up -d
 
-      # Wait for all services healthy
+      # Step 6: Wait for all services healthy
       - name: Wait for services
-        working-directory: hive
+        working-directory: ./hive
         run: |
+          COMPOSE="docker compose -f docker-compose.yml -f docker-compose.override.ci.yml"
+
           echo "Waiting for all services to be healthy..."
-          for i in {1..30}; do
-            HEALTHY=$(docker compose -f docker-compose.yml -f docker-compose.override.ci.yml ps | grep healthy | wc -l)
-            TOTAL=$(docker compose -f docker-compose.yml -f docker-compose.override.ci.yml ps | grep -v Name | wc -l)
-            if [ "$HEALTHY" -eq "$TOTAL" ]; then
-              echo "All services are healthy!"
+          for i in {1..36}; do
+            HEALTHY=$($COMPOSE ps | grep -c '(healthy)' || true)
+            TOTAL=$($COMPOSE ps --services | wc -l | tr -d ' ')
+
+            echo "[$i/36] Healthy: $HEALTHY / $TOTAL"
+
+            if [ "$HEALTHY" -eq "$TOTAL" ] && [ "$TOTAL" -gt 0 ]; then
+              echo "All $TOTAL services are healthy!"
               exit 0
             fi
-            echo "Waiting 5s..."
+
+            # Fail fast — exit if any container has exited/crashed
+            EXITED=$($COMPOSE ps | grep -cE 'Exit|exited|unhealthy' || true)
+            if [ "$EXITED" -gt 0 ]; then
+              echo "A service has crashed or is unhealthy:"
+              $COMPOSE ps
+              exit 1
+            fi
+
             sleep 5
           done
-          echo "Some services failed health check"
-          docker compose -f docker-compose.yml -f docker-compose.override.ci.yml ps
+
+          echo "Timed out waiting for services to become healthy"
+          $COMPOSE ps
           exit 1
 
       # Step 7: Run backend tests in parallel
       - name: Run backend tests
-        working-directory: hive
         run: |
           echo "Running backend tests..."
           services=(auth-service user-service resource-service chat-service note-service progress-service session-service rag-service)
@@ -94,36 +80,11 @@ jobs:
 
       # Step 8: Run frontend E2E tests
       - name: Run frontend E2E tests
-        working-directory: hive
         run: |
           docker compose -f docker-compose.yml -f docker-compose.override.ci.yml exec -T frontend npm install
           docker compose -f docker-compose.yml -f docker-compose.override.ci.yml exec -T frontend npx cypress run
-      #debugging purpose
-      - name: Debug env
-        working-directory: hive
+
+      # Step 9: Tear down CI services
+      - name: Tear down CI
         if: always()
-        run: env
-          
-      - name: Debug logs on failure
-        working-directory: hive
-        if: failure()
-        run: docker compose -f docker-compose.yml -f docker-compose.override.ci.yml logs
-
-
-      - name: Print logs on failure
-        working-directory: hive
-        if: failure()
-        run: |
-          docker compose \
-            -f docker-compose.yml \
-            -f docker-compose.override.ci.yml \
-            logs --no-color --tail=50
-
-      - name: Tear down
-        working-directory: hive
-        if: always()
-        run: |
-          docker compose \
-            -f docker-compose.yml \
-            -f docker-compose.override.ci.yml \
-            down --volumes --remove-orphans
+        run: docker compose -f docker-compose.yml -f docker-compose.override.ci.yml down --volumes
