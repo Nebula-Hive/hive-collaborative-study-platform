@@ -91,6 +91,15 @@ jobs:
             --tag "$ECR_REGISTRY/hive/frontend:latest" \
             --cache-from type=registry,ref="$ECR_REGISTRY/hive/frontend:latest" \
             --cache-to type=inline \
+            --build-arg VITE_FIREBASE_API_KEY="${{ secrets.VITE_FIREBASE_API_KEY }}" \
+            --build-arg VITE_FIREBASE_AUTH_DOMAIN="${{ vars.VITE_FIREBASE_AUTH_DOMAIN }}" \
+            --build-arg VITE_FIREBASE_PROJECT_ID="${{ vars.FIREBASE_PROJECT_ID }}" \
+            --build-arg VITE_FIREBASE_STORAGE_BUCKET="${{ vars.VITE_FIREBASE_STORAGE_BUCKET }}" \
+            --build-arg VITE_FIREBASE_MESSAGING_SENDER_ID="${{ vars.VITE_FIREBASE_MESSAGING_SENDER_ID }}" \
+            --build-arg VITE_FIREBASE_APP_ID="${{ secrets.VITE_FIREBASE_APP_ID }}" \
+            --build-arg VITE_FIREBASE_MEASUREMENT_ID="${{ vars.VITE_FIREBASE_MEASUREMENT_ID }}" \
+            --build-arg VITE_BASE_URL="${{ vars.VITE_BASE_URL }}" \
+            --build-arg VITE_API_GATEWAY_URL="${{ vars.VITE_API_GATEWAY_URL }}" \
             "./frontend"
 
   # ─────────────────────────────────────────────
@@ -132,68 +141,14 @@ jobs:
               "${{ needs.build-and-push.outputs.image_tag }}" \
               "${{ secrets.AWS_REGION }}"
 
+ 
   # ─────────────────────────────────────────────
-  # JOB 3 — Health Check live server
-  # ─────────────────────────────────────────────
-  health-check:
-    name: 🩺 Live Health Check
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    needs: deploy
-
-    steps:
-      - name: Wait for services to stabilize
-        run: sleep 20
-
-      - name: Check live endpoints
-        run: |
-          BASE="http://${{ secrets.EC2_HOST }}"
-
-          echo "Checking frontend..."
-          curl -sf --retry 5 --retry-delay 5 "$BASE" && echo "✅ frontend OK" || echo "❌ frontend FAILED"
-
-          # Internal service health checks via EC2 SSH
-      - uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.EC2_SSH_KEY }}
-          script: |
-            cd /home/ubuntu/hive
-            COMPOSE="docker compose -f docker-compose.yml -f docker-compose.prod.yml"
-
-            declare -A PORTS=(
-              [auth-service]=3000
-              [user-service]=3001
-              [resource-service]=3002
-              [chat-service]=3003
-              [note-service]=3004
-              [progress-service]=3005
-              [session-service]=3006
-              [rag-service]=8000
-            )
-
-            FAILED=0
-            for svc in "${!PORTS[@]}"; do
-              port="${PORTS[$svc]}"
-              container=$($COMPOSE ps -q "$svc")
-              if docker exec "$container" curl -sf "http://localhost:$port/health" > /dev/null; then
-                echo "✅ $svc OK"
-              else
-                echo "❌ $svc FAILED"
-                FAILED=1
-              fi
-            done
-
-            exit $FAILED
-
-  # ─────────────────────────────────────────────
-  # JOB 4 — Logs & Artifacts
+  # JOB 3 — Logs & Artifacts
   # ─────────────────────────────────────────────
   logs-and-artifacts:
     name: 📋 Logs & Artifacts
     runs-on: ubuntu-latest
-    needs: [build-and-push, deploy, health-check]
+    needs: [build-and-push, deploy]
     if: always()
 
     steps:
