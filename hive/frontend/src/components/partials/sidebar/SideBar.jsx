@@ -99,13 +99,13 @@ const navItems = [
   },
   {
     icon: "users",
-    name: "Groups",
+    name: "Group Management",
     path: "/superadmin/groups",
     allowed: ["superadmin"],
   },
   {
     icon: "folder-open",
-    name: "Resources",
+    name: "Resource Management",
     path: "/resources",
     allowed: ["superadmin"],
   },
