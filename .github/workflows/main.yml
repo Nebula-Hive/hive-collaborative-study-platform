@@ -115,6 +115,7 @@ jobs:
           docker compose -f docker-compose.yml -f docker-compose.override.ci.yml exec -T frontend npx cypress run
 #debugging purpose
       - name: Debug logs on failure
+        working-directory: hive
         if: failure()
         run: docker compose -f docker-compose.yml -f docker-compose.override.ci.yml logs
 
