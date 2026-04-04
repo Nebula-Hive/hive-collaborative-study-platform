@@ -2,7 +2,8 @@ FROM node:20-alpine
 RUN apk add --no-cache curl
 WORKDIR /app
 COPY package*.json ./
-RUN npm install --production
+ENV NODE_ENV=production
+RUN npm ci --omit=dev --no-audit --no-fund
 COPY . .
 EXPOSE 3004
 CMD ["node", "server.js"]
