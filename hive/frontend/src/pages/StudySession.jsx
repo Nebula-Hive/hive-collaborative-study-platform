@@ -460,7 +460,7 @@ export default function StudySessionCalendar({ isUpcomingTasks = true, hideListV
   );
 
   return (
-    <div className="min-h-screen bg-primary">
+    <div>
       <div className={`p-4 grid grid-cols-1 gap-6 ${isUpcomingTasks ? "lg:grid-cols-3" : "lg:grid-cols-1"}`}>
         {/* Calendar Section */}
         <div
