@@ -1,4 +1,5 @@
 # .github/workflows/ci.yml
+
 name: CI
 
 on:
@@ -211,62 +212,69 @@ jobs:
   # ─────────────────────────────────────────────
   # JOB 4 — Create PR to battlefield
   # ─────────────────────────────────────────────
+
   create-pr:
-    name: 🚀 Create PR to battlefield
+    name: 🚀 Promote to battlefield
     runs-on: ubuntu-latest
     needs: [initialization, health-check, logs-and-artifacts]
     if: success()
-  
-    permissions:
-      contents: write
-      pull-requests: write
-  
+
     steps:
-      - name: Checkout staging-grounds
+      - name: Checkout
         uses: actions/checkout@v4
         with:
-          ref: staging-grounds
+          ref: ${{ github.event.inputs.branch }}
           fetch-depth: 0
           token: ${{ secrets.GH_PAT }}
-  
-      - name: Ensure battlefield branch exists
+
+      - name: Promote to battlefield
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT }}
         run: |
-          git fetch origin || true
-  
-          if git ls-remote --exit-code --heads origin battlefield; then
-            echo "Branch 'battlefield' already exists."
-          else
-            echo "Creating 'battlefield' from staging-grounds..."
-            git checkout -b battlefield origin/staging-grounds
-            git push origin battlefield
+          SOURCE="${{ github.event.inputs.branch }}"
+          TARGET="battlefield"
+
+          BODY="## ✅ CI Passed
+
+          | Field        | Value |
+          |---|---|
+          | Branch       | \`${SOURCE}\` |
+          | Triggered by | @${{ github.actor }} |
+          | Run          | [${{ github.run_id }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) |
+          | Commit       | \`${{ github.sha }}\` |
+
+          > Automatically promoted after CI passed."
+
+          # Does battlefield exist at all?
+          if ! git ls-remote --exit-code --heads origin "$TARGET" > /dev/null 2>&1; then
+            echo "ℹ️ '$TARGET' does not exist. Creating it from '$SOURCE' — no PR needed."
+            git checkout -b "$TARGET"
+            git push origin "$TARGET"
+            echo "✅ Branch '$TARGET' created from '$SOURCE'."
+            exit 0
           fi
-  
-      - name: Create Pull Request (staging → battlefield)
-        uses: peter-evans/create-pull-request@v6
-        with:
-          token: ${{ secrets.GH_PAT }}
-          base: battlefield
-          branch: pr/staging-to-battlefield
-          title: "🚀 staging-grounds → battlefield (CI passed)"
-          body: |
-            ## ✅ CI Passed
-  
-            Merging latest changes from `staging-grounds` into `battlefield`.
-  
-            ### Details
-            | Field        | Value |
-            |---|---|
-            | Source       | `staging-grounds` |
-            | Target       | `battlefield` |
-            | Triggered by | @${{ github.actor }} |
-            | Run ID       | [${{ github.run_id }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) |
-            | Commit       | `${{ github.sha }}` |
-  
-            ### Artifacts
-            - 📋 [CI Full Report](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
-  
-            > This PR was automatically created by CI.
-          labels: |
-            automated
-            ci-passed
-          draft: false
+
+          echo "ℹ️ '$TARGET' exists. Checking for an open PR..."
+
+          EXISTING_PR=$(gh pr list \
+            --head "$SOURCE" \
+            --base "$TARGET" \
+            --state open \
+            --json number \
+            --jq '.[0].number' 2>/dev/null || echo "")
+
+          if [ -n "$EXISTING_PR" ]; then
+            echo "ℹ️ PR #$EXISTING_PR already exists. Updating..."
+            gh pr edit "$EXISTING_PR" \
+              --title "🚀 [${SOURCE}] → ${TARGET} (CI passed)" \
+              --body "$BODY"
+            echo "✅ PR #$EXISTING_PR updated."
+          else
+            echo "ℹ️ No open PR found. Creating one..."
+            gh pr create \
+              --head "$SOURCE" \
+              --base "$TARGET" \
+              --title "🚀 [${SOURCE}] → ${TARGET} (CI passed)" \
+              --body "$BODY"
+            echo "✅ PR created."
+          fi
