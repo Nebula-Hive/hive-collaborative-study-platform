@@ -74,3 +74,11 @@ services:
       timeout: 3s
       retries: 3
       start_period: 10s
+      
+  pgvector:
+    restart: "no"
+    healthcheck:
+      interval: 5s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
