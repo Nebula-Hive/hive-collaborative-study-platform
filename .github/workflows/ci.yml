@@ -139,6 +139,9 @@ jobs:
           echo "Timed out waiting for services to become healthy"
           $COMPOSE ps
           exit 1
+      - name: Debug pgvector logs
+        if: failure()
+        run: docker logs hive-pgvector
 
       - name: Save health check result
         if: always()
