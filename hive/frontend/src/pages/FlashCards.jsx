@@ -363,7 +363,7 @@ export default function FlashCards() {
         <div className="lg:hidden flex items-center justify-between px-4 py-3 bg-white border-b border-gray-200 sticky top-0 z-50">
           <button 
             onClick={() => setShowMobileDecks(true)}
-            className="flex items-center gap-2 px-3 py-1.5 bg-primary-100 text-primary-900 rounded-lg text-xs font-bold shadow-sm active:scale-95 transition-transform"
+            className="flex items-center gap-2 px-3 py-1.5 bg-gray-800 text-white rounded-lg text-xs font-bold shadow-sm active:scale-95 transition-transform"
           >
             <Icon icon="heroicons-outline:rectangle-stack" className="w-4 h-4" />
             My Decks

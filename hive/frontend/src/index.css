@@ -258,7 +258,7 @@
   }
 
   .btn-primary {
-    @apply bg-primary-500 text-white hover:ring-2 hover:ring-primary-500/80 hover:ring-offset-1;
+    @apply bg-gray-800 text-white shadow-sm hover:bg-gray-900 transition-all font-medium;
   }
 
   .btn-secondary {

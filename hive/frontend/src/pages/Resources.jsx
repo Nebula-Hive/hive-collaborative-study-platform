@@ -305,7 +305,7 @@ export default function Resources() {
                       type="button"
                       onClick={() => handleDownload(resource.resourceId)}
                       disabled={downloadingResourceId === resource.resourceId}
-                      className="bg-primary-900 text-white px-3 py-2 text-sm font-medium rounded-md hover:bg-slate-800 transition disabled:opacity-50"
+                      className="inline-flex items-center justify-center gap-2 rounded-md py-2 px-4 bg-gray-800 text-white shadow-sm hover:bg-gray-900 transition-all text-sm font-medium disabled:opacity-50"
                     >
                       {downloadingResourceId === resource.resourceId ? "Loading..." : "Download"}
                     </button>
@@ -361,7 +361,7 @@ export default function Resources() {
         {canManageResources && (
           <button
             onClick={() => setShowUploadModal(true)}
-            className="bg-primary-900 text-white px-4 py-2 rounded-md hover:bg-slate-800 transition shadow-sm text-sm font-medium"
+            className="inline-flex items-center justify-center gap-2 rounded-md py-2 px-4 bg-gray-800 text-white shadow-sm hover:bg-gray-900 transition-all text-sm font-medium"
           >
             + Upload Resource
           </button>
@@ -463,7 +463,7 @@ export default function Resources() {
             <button
               type="submit"
               disabled={uploading}
-              className="bg-primary-900 text-white px-4 py-2 text-sm font-medium hover:bg-slate-800 rounded-md disabled:opacity-50"
+              className="inline-flex items-center justify-center gap-2 rounded-md py-2 px-6 bg-gray-800 text-white shadow-sm hover:bg-gray-900 transition-all text-sm font-medium disabled:opacity-50"
             >
               {uploading ? "Uploading..." : "Upload"}
             </button>

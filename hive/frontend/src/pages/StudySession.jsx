@@ -476,7 +476,7 @@ export default function StudySessionCalendar({ isUpcomingTasks = true, hideListV
             {isAdmin && (
               <button
                 onClick={() => setIsCreateModalOpen(true)}
-                className="bg-primary-900 text-white px-4 py-2 rounded-md hover:bg-slate-800 transition font-semibold"
+                className="inline-flex items-center justify-center gap-2 rounded-md py-2 px-4 bg-gray-800 text-white shadow-sm hover:bg-gray-900 transition-all text-sm font-medium"
               >
                 + Add Session
               </button>
@@ -739,7 +739,7 @@ export default function StudySessionCalendar({ isUpcomingTasks = true, hideListV
             <button
               type="submit"
               disabled={submitting}
-              className="bg-primary-900 text-white px-4 py-2 text-sm font-medium hover:bg-slate-800 rounded-md"
+              className="inline-flex items-center justify-center gap-2 rounded-md py-2 px-6 bg-gray-800 text-white shadow-sm hover:bg-gray-900 transition-all text-sm font-medium disabled:opacity-50"
             >
               {submitting ? "Creating..." : "Create Session"}
             </button>
@@ -815,7 +815,7 @@ export default function StudySessionCalendar({ isUpcomingTasks = true, hideListV
                 {isAdmin && (
                   <button
                     type="button"
-                    className="bg-primary-900 text-white px-4 py-2 text-sm font-medium hover:bg-slate-800 rounded-md"
+                    className="inline-flex items-center justify-center gap-2 rounded-md py-2 px-4 bg-gray-800 text-white shadow-sm hover:bg-gray-900 transition-all text-sm font-medium"
                     onClick={() => setIsEditing(true)}
                   >
                     Edit
@@ -920,7 +920,7 @@ export default function StudySessionCalendar({ isUpcomingTasks = true, hideListV
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="bg-primary-900 text-white px-4 py-2 text-sm font-medium hover:bg-slate-800 rounded-md"
+                  className="inline-flex items-center justify-center gap-2 rounded-md py-2 px-6 bg-gray-800 text-white shadow-sm hover:bg-gray-900 transition-all text-sm font-medium disabled:opacity-50"
                 >
                   {submitting ? "Saving..." : "Save Changes"}
                 </button>
