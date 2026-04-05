@@ -235,9 +235,11 @@ services:
   frontend:
     # profiles:
     #   - current
-    build: 
+    # build: 
+    #   context: ./frontend
+    build: ./frontend
     # env_file: .env
-      context: ./frontend
+      
       # args:
       environment:
         VITE_FIREBASE_API_KEY: ${VITE_FIREBASE_API_KEY}
