@@ -8,6 +8,15 @@
   font-size: 14px;
 }
 
+@media (max-width: 640px) {
+
+  *,
+  *::before,
+  *::after {
+    font-size: 13px;
+  }
+}
+
 /* Theme Tokens */
 @theme {
   /* Colors */
@@ -214,15 +223,15 @@
   }
 
   .form-control[disabled] {
-    @apply cursor-not-allowed bg-slate-50 text-slate-800 ;
+    @apply cursor-not-allowed bg-slate-50 text-slate-800;
   }
 
   .form-control {
-    @apply pb-2 bg-white transition duration-300 ease-in-out border border-slate-200 focus:ring-1 focus:ring-slate-600/90 focus:outline-none rounded placeholder:text-slate-400 text-slate-900 text-sm px-3 placeholder:font-normal block w-full;
+    @apply py-2 h-10 bg-white transition duration-300 ease-in-out border border-slate-200 focus:ring-1 focus:ring-slate-600/90 focus:outline-none rounded placeholder:text-slate-400 text-slate-900 text-sm pl-3 pr-10 bg-[right_0.75rem_center] placeholder:font-normal block w-full;
   }
 
   .form-label {
-    @apply mb-2 text-slate-600 text-sm leading-6 capitalize cursor-pointer block w-full font-medium rtl:text-right rtl:block;
+    @apply mb-1.5 md:mb-2 text-slate-600 text-sm leading-6 capitalize cursor-pointer block w-full font-medium rtl:text-right rtl:block;
   }
 
   .badge {
@@ -234,7 +243,7 @@
   }
 
   .btn {
-    @apply font-semibold text-sm leading-6 md:px-6 md:py-3 px-4 py-[10px] rounded capitalize transition-all duration-150 md:whitespace-nowrap whitespace-normal relative;
+    @apply font-semibold text-sm leading-6 md:px-6 md:py-3 px-4 py-2 rounded capitalize transition-all duration-150 md:whitespace-nowrap whitespace-normal relative;
   }
 
   .btn.btn-xl {
@@ -254,7 +263,7 @@
   }
 
   .btn-dark {
-    @apply bg-slate-900 text-white hover:ring-2 hover:ring-slate-900/80 hover:ring-offset-1 ;
+    @apply bg-slate-900 text-white hover:ring-2 hover:ring-slate-900/80 hover:ring-offset-1;
   }
 
   .btn-primary {
@@ -262,11 +271,11 @@
   }
 
   .btn-secondary {
-    @apply bg-secondary-500  text-white hover:ring-2 hover:ring-secondary-500/80 hover:ring-offset-1;
+    @apply bg-secondary-500 text-white hover:ring-2 hover:ring-secondary-500/80 hover:ring-offset-1;
   }
 
   .btn-success {
-    @apply bg-success-500  text-white hover:ring-2 hover:ring-success-500/80 hover:ring-offset-1;
+    @apply bg-success-500 text-white hover:ring-2 hover:ring-success-500/80 hover:ring-offset-1;
   }
 
   .btn-info {
@@ -312,11 +321,14 @@
   .custom-scrollbar::-webkit-scrollbar {
     width: 8px;
   }
+
   .custom-scrollbar::-webkit-scrollbar-track {
     background: transparent;
   }
+
   .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: #94a3b8; /* slate-400 */
+    background: #94a3b8;
+    /* slate-400 */
     border-radius: 8px;
     border: 2px solid #ffffff;
   }
@@ -398,19 +410,19 @@
   }
 
   .btn.light {
-    @apply bg-black/15 ring-black/30 ;
+    @apply bg-black/15 ring-black/30;
   }
 
   .btn-primary.light {
-    @apply text-primary-500 ;
+    @apply text-primary-500;
   }
 
   .btn-secondary.light {
-    @apply text-secondary-500 ;
+    @apply text-secondary-500;
   }
 
   .btn-success.light {
-    @apply text-success-500 ;
+    @apply text-success-500;
   }
 
   .btn-info.light {
@@ -434,19 +446,19 @@
   }
 
   .card-subtitle {
-    @apply text-sm leading-5 font-medium text-slate-600 ;
+    @apply text-sm leading-5 font-medium text-slate-600;
   }
 
   .card-header {
-    @apply flex items-center justify-between px-6 pt-6;
+    @apply flex items-center justify-between px-4 md:px-6 pt-4 md:pt-6;
   }
 
   .card-header:not(.no-border) {
-    @apply border-b border-slate-200  pb-5;
+    @apply border-b border-slate-200 pb-5;
   }
 
   .card-footer {
-    @apply flex items-center justify-between px-6 pt-6 border-t border-slate-200  pb-5;
+    @apply flex items-center justify-between px-4 md:px-6 pt-4 md:pt-6 border-t border-slate-200 pb-4 md:pb-5;
   }
 
   .card-height-auto {
@@ -516,7 +528,7 @@
           @apply bg-transparent text-slate-500 h-auto w-auto;
 
           &.active {
-            @apply text-slate-900  text-lg;
+            @apply text-slate-900 text-lg;
           }
         }
       }
@@ -525,15 +537,15 @@
 
 
   .table-th {
-    @apply text-slate-600  text-xs font-semibold uppercase py-5 px-6 ltr:text-left rtl:text-right;
+    @apply text-slate-600 text-xs font-semibold uppercase py-5 px-6 ltr:text-left rtl:text-right;
   }
 
   .table-td {
-    @apply text-slate-600 text-sm font-normal capitalize px-6 py-5 border-slate-100 ;
+    @apply text-slate-600 text-sm font-normal capitalize px-6 py-5 border-slate-100;
   }
 
   .table-checkbox {
-    @apply relative before:flex before:flex-col before:items-center before:justify-center before:w-[18px] before:h-[18px] before:m-[-0.7px] before:bg-slate-100 before:absolute before:inset-0 before:rounded w-4 h-4 rounded checked:before:bg-slate-900 checked:before:content-[url("https://api.iconify.design/heroicons-outline/check.svg?color=white")] checked:before:leading-[10px] checked:before:ring-2 checked:before:ring-black-500 checked:before:ring-offset-2 ;
+    @apply relative before:flex before:flex-col before:items-center before:justify-center before:w-[18px] before:h-[18px] before:m-[-0.7px] before:bg-slate-100 before:absolute before:inset-0 before:rounded w-4 h-4 rounded checked:before:bg-slate-900 checked:before:content-[url("https://api.iconify.design/heroicons-outline/check.svg?color=white")] checked:before:leading-[10px] checked:before:ring-2 checked:before:ring-black-500 checked:before:ring-offset-2;
   }
 
   // InValid Select

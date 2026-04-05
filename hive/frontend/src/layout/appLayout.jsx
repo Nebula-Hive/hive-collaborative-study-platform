@@ -5,6 +5,7 @@ import AppHeader from "@/components/partials/navbar/NavBar";
 import AppSidebar from "@/components/partials/sidebar/SideBar";
 
 import PomodoroTimer from "@/components/PomodoroTimer";
+import IntroVideoSplash from "@/components/ui/IntroVideoSplash";
 
 const LayoutContent = () => {
   const { isExpanded, isHovered, isMobileOpen, toggleMobileSidebar } = useSidebar();
@@ -34,6 +35,7 @@ const LayoutContent = () => {
         </div>
       </div>
       <PomodoroTimer />
+      <IntroVideoSplash />
     </div>
   );
 };

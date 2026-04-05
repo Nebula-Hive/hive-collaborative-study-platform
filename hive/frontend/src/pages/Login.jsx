@@ -46,7 +46,8 @@ function Login() {
         password: data.password,
       });
 
-      Notification.success("Login successful!");
+      sessionStorage.setItem("freshLogin", "true");
+      sessionStorage.removeItem("hasSeenIntro");
 
       const userRole = verifiedUser?.role || "student";
       if (userRole === "admin") {
