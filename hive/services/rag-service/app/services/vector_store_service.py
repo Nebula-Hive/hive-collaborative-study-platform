@@ -52,6 +52,7 @@ class VectorStoreService:
                    1 - (embedding <=> %s::vector) AS similarity_score
             FROM document_chunks
             WHERE subject_code = %s
+              AND LOWER(COALESCE(resource_type, '')) <> 'past_paper'
             ORDER BY embedding <=> %s::vector
             LIMIT %s
         """

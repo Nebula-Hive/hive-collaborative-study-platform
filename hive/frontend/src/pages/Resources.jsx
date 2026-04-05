@@ -159,7 +159,7 @@ export default function Resources() {
       });
 
       toast.success("Resource uploaded successfully");
-      if (!response?.resource?.isEmbedded) {
+      if (resourceType !== "past_paper" && !response?.resource?.isEmbedded) {
         toast.success("AI is processing this document...");
       }
 
@@ -278,7 +278,7 @@ export default function Resources() {
                       <h4 className="text-base font-semibold text-gray-800 truncate">
                         {resource.title || resource.fileName || "Untitled Resource"}
                       </h4>
-                      {resource.isEmbedded ? (
+                      {resource.resourceType !== "past_paper" && (resource.isEmbedded ? (
                         <span className="text-xs bg-success-500/10 text-success-500 px-2 py-1 rounded-full font-medium">
                           AI Ready
                         </span>
@@ -286,7 +286,7 @@ export default function Resources() {
                         <span className="text-xs bg-gray-100 text-gray-500 px-2 py-1 rounded-full font-medium">
                           Processing...
                         </span>
-                      )}
+                      ))}
                     </div>
 
                     <p className="text-sm text-gray-600 mb-3">

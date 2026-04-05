@@ -154,32 +154,35 @@ const uploadResource = async (req, res) => {
     await resource.save();
 
     // ── Notify RAG service to start embedding pipeline ──────────────
-    try {
-      const ragPayload = {
-        resourceId: resource.resourceId,
-        subjectCode: resource.subjectCode,
-        subjectName: resource.subjectName,
-        s3Url: resource.s3Url,
-        fileName: resource.fileName,
-        resourceType: resource.resourceType,
-        uploadedBy: resource.uploadedBy,
-      };
+    // Past papers are intentionally excluded from RAG ingestion.
+    if (resource.resourceType !== 'past_paper') {
+      try {
+        const ragPayload = {
+          resourceId: resource.resourceId,
+          subjectCode: resource.subjectCode,
+          subjectName: resource.subjectName,
+          s3Url: resource.s3Url,
+          fileName: resource.fileName,
+          resourceType: resource.resourceType,
+          uploadedBy: resource.uploadedBy,
+        };
 
-      const ragRes = await axios.post(
-        `${RAG_SERVICE_URL}/api/rag/ingest`,
-        ragPayload,
-        { timeout: 120000 }
-      );
+        const ragRes = await axios.post(
+          `${RAG_SERVICE_URL}/api/rag/ingest`,
+          ragPayload,
+          { timeout: 120000 }
+        );
 
-      if (ragRes.status === 200 || ragRes.status === 202) {
-        resource.isEmbedded = true;
-        resource.embeddedAt = new Date();
-        await resource.save();
-        console.log(`[RAG] Embedding triggered for resource ${resource.resourceId}`);
+        if (ragRes.status === 200 || ragRes.status === 202) {
+          resource.isEmbedded = true;
+          resource.embeddedAt = new Date();
+          await resource.save();
+          console.log(`[RAG] Embedding triggered for resource ${resource.resourceId}`);
+        }
+      } catch (ragErr) {
+        // Non-fatal — resource is saved, embedding can be retried later
+        console.warn(`[RAG] Could not notify RAG service: ${ragErr.message}`);
       }
-    } catch (ragErr) {
-      // Non-fatal — resource is saved, embedding can be retried later
-      console.warn(`[RAG] Could not notify RAG service: ${ragErr.message}`);
     }
 
     return res.status(201).json({
