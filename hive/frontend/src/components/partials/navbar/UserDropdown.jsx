@@ -16,7 +16,7 @@ const UserDropdown = ({ user }) => {
               <div
                 className="flex items-center text-gray-700"
               >
-                <span className="flex items-center justify-center mr-3 rounded-full h-10 w-10 bg-primary-500 text-white font-semibold text-sm">
+                <span className="flex items-center justify-center mr-0 lg:mr-3 rounded-full h-9 w-9 lg:h-10 lg:w-10 bg-primary-500 text-white font-semibold text-xs lg:text-sm">
                   {user.name
                     ?.split(" ")
                     .filter(Boolean)
@@ -25,7 +25,7 @@ const UserDropdown = ({ user }) => {
                     .join("")}
                 </span>
 
-                <div className="flex flex-col justify-center items-start">
+                <div className="hidden lg:flex flex-col justify-center items-start">
                   <span className="block mr-1 font-medium text-sm">
                     {" "}
                     {user.name}
@@ -55,7 +55,7 @@ const UserDropdown = ({ user }) => {
             </>
           }
           labelClass="py-0 "
-          classMenuItems="mt-2 w-[200px]"
+          classMenuItems="mt-2 w-[200px] ltr:right-0 rtl:left-0"
           items={[
             {
               label: "Edit profile",

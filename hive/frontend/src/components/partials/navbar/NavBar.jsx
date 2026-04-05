@@ -8,7 +8,6 @@ import UserDropdown from "./UserDropdown";
 import NewBtn from "./Newbtn";
 
 const AppHeader = () => {
-  const [isApplicationMenuOpen, setApplicationMenuOpen] = useState(false);
   const { isMobileOpen, toggleSidebar, toggleMobileSidebar } = useSidebar();
   const { user, role } = useAuth();
   const inputRef = useRef(null);
@@ -32,9 +31,6 @@ const AppHeader = () => {
   // console.log(locationName);
   // console.log(location);
 
-  const toggleApplicationMenu = () => {
-    setApplicationMenuOpen(!isApplicationMenuOpen);
-  };
 
   return (
     <header className="sticky top-0 flex w-full bg-white border-gray-200 z-40 lg:border-b">
@@ -87,31 +83,8 @@ const AppHeader = () => {
             )}
           </h1>
 
-
-          <button
-            onClick={toggleApplicationMenu}
-            className="flex items-center justify-center w-8 h-8 text-gray-700 rounded-md hover:bg-gray-100 lg:hidden"
-          >
-            <svg
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                fillRule="evenodd"
-                clipRule="evenodd"
-                d="M5.99902 10.4951C6.82745 10.4951 7.49902 11.1667 7.49902 11.9951V12.0051C7.49902 12.8335 6.82745 13.5051 5.99902 13.5051C5.1706 13.5051 4.49902 12.8335 4.49902 12.0051V11.9951C4.49902 11.1667 5.1706 10.4951 5.99902 10.4951ZM17.999 10.4951C18.8275 10.4951 19.499 11.1667 19.499 11.9951V12.0051C19.499 12.8335 18.8275 13.5051 17.999 13.5051C17.1706 13.5051 16.499 12.8335 16.499 12.0051V11.9951C16.499 11.1667 17.1706 10.4951 17.999 10.4951ZM13.499 11.9951C13.499 11.1667 12.8275 10.4951 11.999 10.4951C11.1706 10.4951 10.499 11.1667 10.499 11.9951V12.0051C10.499 12.8335 11.1706 13.5051 11.999 13.5051C12.8275 13.5051 13.499 12.8335 13.499 12.0051V11.9951Z"
-                fill="currentColor"
-              />
-            </svg>
-          </button>
         </div>
-        <div
-          className={`${isApplicationMenuOpen ? "flex" : "hidden"
-            } justify-between items-center  w-full gap-10 px-5 py-0 lg:flex shadow-theme-md lg:justify-end lg:px-5 lg:shadow-none`}
-        >
+        <div className="flex items-center lg:justify-end lg:px-5">
           {/* <>
             {role === "superadmin" && (
               <NewBtn />
