@@ -30,6 +30,14 @@ export default function PomodoroTimer() {
   const [inputMinutes, setInputMinutes] = useState(String(PRESETS.focus.minutes));
   const intervalRef = useRef(null);
   const inputRef = useRef(null);
+  const audioRef = useRef(null);
+  const [isAudioPrimed, setIsAudioPrimed] = useState(false);
+
+  // Initialize the audio object once
+  useEffect(() => {
+    audioRef.current = new Audio(ALARM_SOUND);
+    audioRef.current.load();
+  }, []);
 
   // Attempt to find the dashboard slot for portaling when on the dashboard
   useEffect(() => {
@@ -78,11 +86,13 @@ export default function PomodoroTimer() {
             clearInterval(intervalRef.current);
             setIsRunning(false);
 
-            try {
-              const audio = new Audio(ALARM_SOUND);
-              audio.volume = 1;
-              audio.play();
-            } catch (e) { }
+            if (audioRef.current) {
+              audioRef.current.currentTime = 0;
+              audioRef.current.play().catch((e) => {
+                console.warn("Pomodoro audio play failed:", e);
+                toast.info("🐝 Time's up! (Sound blocked by browser - please interact with the page)");
+              });
+            }
 
             setMode((currentMode) => {
               if (currentMode === "focus") {
@@ -111,6 +121,17 @@ export default function PomodoroTimer() {
   };
 
   const handleStart = () => {
+    // Prime audio on first interaction to allow future playback
+    if (!isAudioPrimed && audioRef.current) {
+      audioRef.current.play()
+        .then(() => {
+          audioRef.current.pause();
+          audioRef.current.currentTime = 0;
+          setIsAudioPrimed(true);
+        })
+        .catch((e) => console.log("Audio priming skipped:", e));
+    }
+
     if (timeLeft === 0) setPreset(mode);
     setIsRunning(true);
   };
