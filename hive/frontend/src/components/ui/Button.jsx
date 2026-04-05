@@ -6,7 +6,7 @@ function Button({
   type = "button",
   isLoading,
   disabled,
-  className = "bg-primary-500 text-white",
+  className = "bg-gray-800 text-white hover:bg-gray-900 transition-all shadow-sm",
   children,
   icon,
   loadingClass = "unset-classname",
