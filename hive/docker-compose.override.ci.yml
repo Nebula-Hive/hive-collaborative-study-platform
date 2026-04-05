@@ -84,3 +84,4 @@ services:
       start_period: 10s
     volumes:
     - pgvector_data:/var/lib/postgresql/data
+    - ./init/pgvector-init.sql:/docker-entrypoint-initdb.d/01-init.sql
