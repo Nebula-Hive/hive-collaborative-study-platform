@@ -72,12 +72,7 @@ const navItems = [
     path: "/resources",
     allowed: ["admin"],
   },
-  {
-    icon: "chart-bar",
-    name: "Academic Progress",
-    path: "/progress",
-    allowed: ["admin"],
-  },
+
   // Superadmin specific items
   {
     icon: "home",
@@ -121,6 +116,12 @@ const navItems = [
     path: "/superadmin/batch-levels",
     allowed: ["superadmin"],
   },
+  {
+    icon: "chart-pie",
+    name: "Academic Progress",
+    path: "/progress",
+    allowed: ["superadmin"],
+  },
 ];
 
 const AppSidebar = () => {
@@ -157,12 +158,12 @@ const AppSidebar = () => {
 
   return (
     <aside
-      className={`fixed top-0 left-0 h-screen bg-white text-secondary-500 transition-all border duration-300 ease-in-out border-gray-200 z-50
-        ${isExpanded || isMobileOpen ? "w-[250px] lg:w-[288px]" : "w-[88px]"}
+      className={`fixed top-0 left-0 h-screen bg-white text-secondary-500 transition-all border duration-300 ease-in-out border-gray-200 z-50 shadow-base
+        ${isExpanded || isMobileOpen ? "w-[260px] lg:w-[288px]" : "w-[88px]"}
         ${isMobileOpen ? "translate-x-0" : "-translate-x-full"}
         lg:translate-x-0`}
     >
-      <div className="flex items-center justify-between py-4 px-5">
+      <div className="flex items-center justify-between h-20 px-5 border-b border-gray-100">
         <Link to="/" onClick={() => isMobileOpen && toggleMobileSidebar()}>
           {isExpanded || isMobileOpen ? (
             <>

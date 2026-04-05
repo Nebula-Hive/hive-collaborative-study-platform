@@ -434,6 +434,7 @@ export default function ProgressTracker() {
 
   const [summaryList, setSummaryList] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [batchFilter, setBatchFilter] = useState("");
   const [selectedStudent, setSelectedStudent] = useState(null);
 
   const [progress, setProgress] = useState(withDefaultProgress());
@@ -559,15 +560,27 @@ export default function ProgressTracker() {
   const trendData = useMemo(() => formatTrend(progress.semesters), [progress.semesters]);
 
   const filteredSummary = useMemo(() => {
-    if (!searchQuery.trim()) return summaryList;
+    let result = summaryList;
 
-    const needle = searchQuery.trim().toLowerCase();
-    return summaryList.filter(
-      (student) =>
-        student.studentName?.toLowerCase().includes(needle) ||
-        student.studentNumber?.toLowerCase().includes(needle)
-    );
-  }, [searchQuery, summaryList]);
+    if (batchFilter) {
+      result = result.filter((student) => String(student.level) === String(batchFilter));
+    }
+
+    if (searchQuery.trim()) {
+      const needle = searchQuery.trim().toLowerCase();
+      result = result.filter(
+        (student) =>
+          student.studentName?.toLowerCase().includes(needle) ||
+          student.studentNumber?.toLowerCase().includes(needle)
+      );
+    }
+
+    return result;
+  }, [searchQuery, batchFilter, summaryList]);
+
+  const batchOptions = useMemo(() => {
+    return [...new Set(summaryList.map((s) => s.level).filter(Boolean))];
+  }, [summaryList]);
 
   const validationError = useMemo(() => {
     if (![1, 2, 3, 4].includes(Number(semesterForm.yearLevel))) {
@@ -626,12 +639,12 @@ export default function ProgressTracker() {
     const inferredYearLevel = yearLevelMatch
       ? Number(yearLevelMatch[1])
       : Math.min(
-          4,
-          Math.max(
-            1,
-            sortSemesters(progress.semesters).findIndex((entry) => entry.year === semester.year) + 1
-          )
-        );
+        4,
+        Math.max(
+          1,
+          sortSemesters(progress.semesters).findIndex((entry) => entry.year === semester.year) + 1
+        )
+      );
 
     setSemesterForm({
       yearLevel: inferredYearLevel,
@@ -803,11 +816,25 @@ export default function ProgressTracker() {
           <div className="flex flex-col md:flex-row md:items-center gap-3 mb-4">
             <input
               type="text"
-              className="form-control"
+              className="form-control flex-1 py-2 h-10"
               placeholder="Search by student name or student number"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
+            {role === "superadmin" && (
+              <select
+                className="form-control md:w-48 py-2 h-10"
+                value={batchFilter}
+                onChange={(e) => setBatchFilter(e.target.value)}
+              >
+                <option value="">All Batches</option>
+                {batchOptions.map((batch) => (
+                  <option key={batch} value={batch}>
+                    Batch {batch}
+                  </option>
+                ))}
+              </select>
+            )}
           </div>
 
           <div className="overflow-x-auto">
@@ -988,84 +1015,84 @@ export default function ProgressTracker() {
               const semesterGPA = Number(semester.semesterGPA || 0);
 
               return (
-              <div key={semester._id} className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm">
-                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
-                  <div>
-                    <h3 className="text-base font-semibold text-secondary-800">
-                      {displayYear(semester.year)} - Semester {semester.semester}
-                    </h3>
-                    <p className="text-sm text-secondary-500 mt-1">Total Credits: {semester.totalCredits}</p>
+                <div key={semester._id} className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm">
+                  <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+                    <div>
+                      <h3 className="text-base font-semibold text-secondary-800">
+                        {displayYear(semester.year)} - Semester {semester.semester}
+                      </h3>
+                      <p className="text-sm text-secondary-500 mt-1">Total Credits: {semester.totalCredits}</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className={`badge ${semesterGPA >= 3.5 ? "bg-success-100 text-success-600" : "bg-slate-100 text-secondary-700"}`}>
+                        Semester GPA {semesterGPA.toFixed(2)}
+                      </span>
+                      <button
+                        type="button"
+                        className="btn btn-sm btn-outline-secondary"
+                        onClick={() => toggleExpanded(semester._id)}
+                      >
+                        {expandedIds[semester._id] ? "Collapse" : "Expand"}
+                      </button>
+                      {canEdit && (
+                        <>
+                          <button
+                            type="button"
+                            className="btn btn-sm btn-outline-primary"
+                            onClick={() => openEditModal(semester)}
+                            disabled={saving}
+                          >
+                            Edit
+                          </button>
+                          <button
+                            type="button"
+                            className="btn btn-sm btn-outline-danger"
+                            onClick={() => onDeleteSemester(semester._id)}
+                            disabled={saving}
+                          >
+                            Delete
+                          </button>
+                        </>
+                      )}
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className={`badge ${semesterGPA >= 3.5 ? "bg-success-100 text-success-600" : "bg-slate-100 text-secondary-700"}`}>
-                      Semester GPA {semesterGPA.toFixed(2)}
-                    </span>
-                    <button
-                      type="button"
-                      className="btn btn-sm btn-outline-secondary"
-                      onClick={() => toggleExpanded(semester._id)}
-                    >
-                      {expandedIds[semester._id] ? "Collapse" : "Expand"}
-                    </button>
-                    {canEdit && (
-                      <>
-                        <button
-                          type="button"
-                          className="btn btn-sm btn-outline-primary"
-                          onClick={() => openEditModal(semester)}
-                          disabled={saving}
-                        >
-                          Edit
-                        </button>
-                        <button
-                          type="button"
-                          className="btn btn-sm btn-outline-danger"
-                          onClick={() => onDeleteSemester(semester._id)}
-                          disabled={saving}
-                        >
-                          Delete
-                        </button>
-                      </>
-                    )}
-                  </div>
-                </div>
 
-                {expandedIds[semester._id] && (
-                  <div className="mt-4 overflow-x-auto">
-                    <table className="min-w-full divide-y divide-slate-100 table-fixed">
-                      <thead>
-                        <tr>
-                          <th className="table-th">Module Code</th>
-                          <th className="table-th">Module Name</th>
-                          <th className="table-th">Credits</th>
-                          <th className="table-th">Grade</th>
-                          <th className="table-th">Grade Points</th>
-                        </tr>
-                      </thead>
-                      <tbody className="bg-white divide-y divide-slate-100">
-                        {(semester.modules || []).map((module, index) => (
-                          <tr key={`${semester._id}-${index}`}>
-                            <td className="table-td">{module.moduleCode}</td>
-                            <td className="table-td">{module.moduleName}</td>
-                            <td className="table-td">{module.creditHours}</td>
-                            <td className={`table-td font-semibold ${getGradeColorClass(module.grade)}`}>
-                              {module.grade}
-                            </td>
-                            <td className="table-td">{Number(module.gradePoints || 0).toFixed(1)}</td>
+                  {expandedIds[semester._id] && (
+                    <div className="mt-4 overflow-x-auto">
+                      <table className="min-w-full divide-y divide-slate-100 table-fixed">
+                        <thead>
+                          <tr>
+                            <th className="table-th">Module Code</th>
+                            <th className="table-th">Module Name</th>
+                            <th className="table-th">Credits</th>
+                            <th className="table-th">Grade</th>
+                            <th className="table-th">Grade Points</th>
                           </tr>
-                        ))}
-                        <tr>
-                          <td className="table-td font-semibold">Totals</td>
-                          <td className="table-td">-</td>
-                          <td className="table-td font-semibold">{semester.totalCredits}</td>
-                          <td className="table-td">-</td>
-                          <td className="table-td font-semibold">Semester GPA {semesterGPA.toFixed(2)}</td>
-                        </tr>
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-              </div>
+                        </thead>
+                        <tbody className="bg-white divide-y divide-slate-100">
+                          {(semester.modules || []).map((module, index) => (
+                            <tr key={`${semester._id}-${index}`}>
+                              <td className="table-td">{module.moduleCode}</td>
+                              <td className="table-td">{module.moduleName}</td>
+                              <td className="table-td">{module.creditHours}</td>
+                              <td className={`table-td font-semibold ${getGradeColorClass(module.grade)}`}>
+                                {module.grade}
+                              </td>
+                              <td className="table-td">{Number(module.gradePoints || 0).toFixed(1)}</td>
+                            </tr>
+                          ))}
+                          <tr>
+                            <td className="table-td font-semibold">Totals</td>
+                            <td className="table-td">-</td>
+                            <td className="table-td font-semibold">{semester.totalCredits}</td>
+                            <td className="table-td">-</td>
+                            <td className="table-td font-semibold">Semester GPA {semesterGPA.toFixed(2)}</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
               );
             })}
           </div>
