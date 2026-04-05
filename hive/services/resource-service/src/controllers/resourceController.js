@@ -265,7 +265,7 @@ const downloadResource = async (req, res) => {
     const command = new GetObjectCommand({
       Bucket: S3_BUCKET,
       Key: resource.s3Key,
-      ResponseContentDisposition: `attachment; filename="${resource.fileName}"`,
+      ResponseContentDisposition: req.query.download === 'true' ? `attachment; filename="${resource.fileName}"` : `inline; filename="${resource.fileName}"`,
     });
 
     const presignedUrl = await getSignedUrl(s3Client, command, { expiresIn: 3600 });
