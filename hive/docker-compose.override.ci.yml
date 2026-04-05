@@ -82,6 +82,10 @@ services:
       timeout: 3s
       retries: 3
       start_period: 10s
+    env:
+      POSTGRES_USER: hive_user
+      POSTGRES_PASSWORD: hive_pass
+      POSTGRES_DB: hive_vectors
     volumes:
     - pgvector_data:/var/lib/postgresql/data
     - ./init/pgvector-init.sql:/docker-entrypoint-initdb.d/01-init.sql
