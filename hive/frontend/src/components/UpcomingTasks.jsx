@@ -3,11 +3,11 @@ import { getSubjectColor } from "@/lib/colors";
 
 export default function UpcomingTasks({ tasks = [], loading = false, onTaskClick }) {
     return (
-        <div>
-            <h3 className="text-sm font-semibold text-secondary-700 mb-3">
+        <div className="flex flex-col h-full overflow-hidden">
+            <h3 className="text-sm font-semibold text-secondary-700 mb-4 shrink-0 px-1">
                 Upcoming tasks
             </h3>
-            <div className="space-y-3 font-inter">
+            <div className="flex-1 overflow-y-auto space-y-3 font-inter px-2 custom-scrollbar pb-2">
                 {loading && (
                     <p className="text-xs text-secondary-400 italic">Finding your next buzz... 🐝</p>
                 )}
