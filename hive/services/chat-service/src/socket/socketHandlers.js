@@ -1,6 +1,47 @@
 const Message = require('../models/messageModel');
+const ChatUser = require('../models/userModel');
 
 const buildRoomName = (batch) => `batch_${batch}`;
+
+const NOTIFICATION_SERVICE_URL = process.env.NOTIFICATION_SERVICE_URL || 'http://localhost:3007';
+const SERVICE_SECRET_KEY = process.env.SERVICE_SECRET_KEY || 'hive_internal_service_key_2025';
+const roomPresence = new Map();
+
+const markOnline = (room, uid) => {
+  if (!roomPresence.has(room)) {
+    roomPresence.set(room, new Set());
+  }
+  roomPresence.get(room).add(uid);
+};
+
+const markOffline = (room, uid) => {
+  const users = roomPresence.get(room);
+  if (!users) return;
+  users.delete(uid);
+  if (users.size === 0) {
+    roomPresence.delete(room);
+  }
+};
+
+const sendNotificationSafely = async (payload) => {
+  try {
+    const response = await fetch(`${NOTIFICATION_SERVICE_URL}/api/notifications/send`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-service-key': SERVICE_SECRET_KEY,
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      const body = await response.text();
+      console.error('sendNotificationSafely failed', response.status, body);
+    }
+  } catch (err) {
+    console.error('sendNotificationSafely error', err.message || err);
+  }
+};
 
 const attachChatSocketHandlers = (io, socket) => {
   const { batch, uid, name, studentNumber } = socket.data.userProfile;
@@ -10,6 +51,7 @@ const attachChatSocketHandlers = (io, socket) => {
   socket.join(room);
   socket.data.room = room;
   socket.data.batch = batchValue;
+  markOnline(room, uid);
 
   socket.emit('chat:ready', {
     room,
@@ -58,6 +100,39 @@ const attachChatSocketHandlers = (io, socket) => {
       };
 
       io.to(room).emit('chat:message', payload);
+
+      const onlineUsers = roomPresence.get(room) || new Set();
+      // Notify offline members in the same batch regardless of role.
+      // This allows admins who switch to student view to still receive chat alerts.
+      const batchMembers = await ChatUser.find({
+        batch: Number(batchValue),
+        role: { $in: ['student', 'admin', 'superadmin'] },
+        isActive: true,
+      })
+        .select('firebaseUid')
+        .lean();
+
+      const offlineRecipients = batchMembers
+        .map((user) => user.firebaseUid)
+        .filter((recipientUid) => recipientUid && recipientUid !== uid && !onlineUsers.has(recipientUid));
+
+      if (offlineRecipients.length > 0) {
+        const messagePreview = trimmedContent.length > 100
+          ? `${trimmedContent.slice(0, 97)}...`
+          : trimmedContent;
+
+        await sendNotificationSafely({
+          userIds: offlineRecipients,
+          title: 'New Message',
+          message: `${name}: ${messagePreview}`,
+          type: 'chat',
+          data: {
+            groupId: room,
+            senderId: uid,
+            senderName: name,
+          },
+        });
+      }
     } catch (err) {
       console.error('chat send error', err);
       socket.emit('chat:error', { message: 'Failed to send message' });
@@ -65,6 +140,7 @@ const attachChatSocketHandlers = (io, socket) => {
   });
 
   socket.on('disconnect', (reason) => {
+    markOffline(room, uid);
     console.log(`socket disconnected: ${socket.id} (${reason})`);
   });
 };
