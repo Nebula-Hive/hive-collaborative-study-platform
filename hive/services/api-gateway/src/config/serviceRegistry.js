@@ -11,6 +11,7 @@ const serviceRegistry = {
   '/notes':     process.env.NOTE_SERVICE_URL      || 'http://localhost:3004',
   '/progress':  process.env.PROGRESS_SERVICE_URL  || 'http://localhost:3005',
   '/sessions':  process.env.SESSION_SERVICE_URL   || 'http://localhost:3006',
+  '/notifications': process.env.NOTIFICATION_SERVICE_URL || 'http://localhost:3007',
   '/rag':       process.env.RAG_SERVICE_URL       || 'http://localhost:8000',
 };
 

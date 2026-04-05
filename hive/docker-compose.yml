@@ -56,6 +56,7 @@ services:
     environment:
       PORT: 3001
       MONGO_URI: ${MONGO_URI:-mongodb://mongo:27017/hive}
+      NOTIFICATION_SERVICE_URL: http://notification-service:3007
     ports:
       - "3001:3001"
     depends_on:
@@ -77,6 +78,7 @@ services:
       MONGO_URI: ${MONGO_URI:-mongodb://mongo:27017/hive}
       RAG_SERVICE_URL: http://rag-service:8000
       USER_SERVICE_URL: http://user-service:3001
+      NOTIFICATION_SERVICE_URL: http://notification-service:3007
     ports:
       - "3002:3002"
     depends_on:
@@ -100,6 +102,7 @@ services:
     environment:
       PORT: 3003
       MONGO_URI: ${MONGO_URI:-mongodb://mongo:27017/hive}
+      NOTIFICATION_SERVICE_URL: http://notification-service:3007
     ports:
       - "3003:3003"
     depends_on:
@@ -157,6 +160,7 @@ services:
     environment:
       PORT: 3006
       MONGO_URI: ${MONGO_URI:-mongodb://mongo:27017/hive}
+      NOTIFICATION_SERVICE_URL: http://notification-service:3007
     ports:
       - "3006:3006"
     depends_on:
@@ -194,6 +198,32 @@ services:
       retries: 5
       start_period: 30s
 
+  notification-service:
+    build: ./services/notification-service
+    env_file: .env
+    environment:
+      PORT: 3007
+      MONGO_URI: ${MONGO_URI:-mongodb://mongo:27017/hive}
+      USER_SERVICE_URL: http://user-service:3001
+      SESSION_SERVICE_URL: http://session-service:3006
+      NOTIFICATION_SERVICE_URL: http://notification-service:3007
+    ports:
+      - "3007:3007"
+    depends_on:
+      mongo:
+        condition: service_healthy
+      user-service:
+        condition: service_healthy
+      session-service:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3007/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 25s
+
   api-gateway:
     build: ./services/api-gateway
     env_file: .env
@@ -206,6 +236,7 @@ services:
       NOTE_SERVICE_URL: http://note-service:3004
       PROGRESS_SERVICE_URL: http://progress-service:3005
       SESSION_SERVICE_URL: http://session-service:3006
+      NOTIFICATION_SERVICE_URL: http://notification-service:3007
       RAG_SERVICE_URL: http://rag-service:8000
     ports:
       - "4000:4000"
@@ -223,6 +254,8 @@ services:
       progress-service:
         condition: service_healthy
       session-service:
+        condition: service_healthy
+      notification-service:
         condition: service_healthy
       rag-service:
         condition: service_healthy
@@ -246,6 +279,7 @@ services:
       VITE_NOTE_SERVICE_URL: http://localhost:3004
       VITE_PROGRESS_SERVICE_URL: http://localhost:3005
       VITE_SESSION_SERVICE_URL: http://localhost:3006
+      VITE_NOTIFICATION_SERVICE_URL: http://localhost:3007
       VITE_RAG_SERVICE_URL: http://localhost:8000
     ports:
       - "5173:5173"
