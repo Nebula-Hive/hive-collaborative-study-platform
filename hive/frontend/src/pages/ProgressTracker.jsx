@@ -424,7 +424,7 @@ const CustomTooltip = ({ active, payload, label }) => {
 
 export default function ProgressTracker() {
   const { role, viewMode, user } = useAuth();
-  const isPrivilegedRole = role === "admin" || role === "superadmin";
+  const isPrivilegedRole = role === "superadmin";
   const isAdminUser = isPrivilegedRole && viewMode !== "student";
 
   const [loading, setLoading] = useState(true);
