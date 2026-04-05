@@ -34,7 +34,7 @@ const Dropdown = ({
 }) => {
   return (
     <div className={`${wrapperClass} `}>
-      <Menu as="div" className={`block w-full ${className}`}>
+      <Menu as="div" className={`relative block w-full ${className}`}>
         <MenuButton
           as="div"
           className="block w-full focus:outline-none focus:ring-0"
