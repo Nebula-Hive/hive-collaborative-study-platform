@@ -45,6 +45,11 @@ const sessionService = axios.create({
     timeout: 30000,
 });
 
+const notificationService = axios.create({
+    baseURL: import.meta.env.VITE_NOTIFICATION_SERVICE_URL || "http://localhost:3007",
+    timeout: 30000,
+});
+
 const ragService = axios.create({
     baseURL: import.meta.env.VITE_RAG_SERVICE_URL || "http://localhost:8000",
     timeout: 30000,
@@ -61,6 +66,7 @@ const instance = {
     noteService,
     progressService,
     sessionService,
+    notificationService,
     ragService,
 };
 
