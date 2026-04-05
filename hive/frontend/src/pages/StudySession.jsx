@@ -132,7 +132,7 @@ const isFutureOrToday = (session) => {
 };
 
 const renderDescription = (description) => {
-  if (!description) return "";
+  if (!description || description.trim() === "") return "-";
   const trimmed = description.trim();
   const isUrl = /^(https?:\/\/[^\s]+)$/i.test(trimmed);
 
@@ -482,7 +482,7 @@ export default function StudySessionCalendar({ isUpcomingTasks = true, hideListV
 
   return (
     <div>
-      <div className={`p-4 grid grid-cols-1 gap-6 ${isUpcomingTasks ? "lg:grid-cols-3" : "lg:grid-cols-1"}`}>
+      <div className={`p-4 grid grid-cols-1 items-stretch gap-6 ${isUpcomingTasks ? "lg:grid-cols-3" : "lg:grid-cols-1"}`}>
         {/* Calendar Section */}
         <div
           className={`bg-white rounded-xl border border-gray-200 p-6 shadow-sm ${isUpcomingTasks ? "lg:col-span-2" : ""}`}
@@ -576,61 +576,11 @@ export default function StudySessionCalendar({ isUpcomingTasks = true, hideListV
               />
             </>
           )}
-
-          {!isAdmin && !hideListView && (
-            <div className="mt-6 rounded-xl border border-gray-200 overflow-hidden">
-              <div className="bg-primary-50 px-4 py-3 font-semibold text-secondary-700">
-                Session List View
-              </div>
-              <div className="overflow-x-auto">
-                <table className="w-full min-w-[860px]">
-                  <thead className="bg-gray-50 text-left text-sm text-secondary-600">
-                    <tr>
-                      <th className="px-4 py-3">Subject Code</th>
-                      <th className="px-4 py-3">Type</th>
-                      <th className="px-4 py-3">Topic</th>
-                      <th className="px-4 py-3">Date</th>
-                      <th className="px-4 py-3">Time</th>
-                      <th className="px-4 py-3">Description</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {allSessions.length === 0 && (
-                      <tr>
-                        <td className="px-4 py-6 text-secondary-500" colSpan={6}>
-                          No sessions available.
-                        </td>
-                      </tr>
-                    )}
-
-                    {allSessions.map((session) => {
-                      const sessionDateTime = combineSessionDateAndTime(session);
-                      const isPast = sessionDateTime < new Date();
-                      return (
-                        <tr
-                          key={session._id}
-                          className={`border-t border-gray-100 cursor-pointer hover:bg-primary-50 ${isPast ? "text-gray-400" : "text-secondary-700"}`}
-                          onClick={() => openSessionDetails(session._id)}
-                        >
-                          <td className="px-4 py-3 font-semibold">{session.subjectCode}</td>
-                          <td className="px-4 py-3">{session.type}</td>
-                          <td className="px-4 py-3">{session.topic}</td>
-                          <td className="px-4 py-3">{formatDdMmYyyy(session.date)}</td>
-                          <td className="px-4 py-3">{session.time}</td>
-                          <td className="px-4 py-3">{renderDescription(session.description)}</td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
         </div>
 
         {/* Upcoming Tasks Sidebar */}
         {isUpcomingTasks && (
-          <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm h-fit">
+          <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm flex flex-col h-full overflow-hidden">
             <UpcomingTasks
               tasks={upcomingSessions}
               loading={loading}
@@ -639,6 +589,64 @@ export default function StudySessionCalendar({ isUpcomingTasks = true, hideListV
           </div>
         )}
       </div>
+
+      {/* Session List View - Full Width Below Calendar */}
+      {!loading && !isAdmin && !hideListView && (
+        <div className="px-4 pb-6">
+          <div className="rounded-xl border border-gray-200 overflow-hidden bg-white shadow-sm">
+            <div className="bg-primary-50 px-4 py-3 font-semibold text-secondary-700 border-b border-gray-100 flex items-center justify-between">
+              <span>Session List View</span>
+              <span className="text-xs font-normal text-secondary-500">Upcoming sessions sorted by date</span>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[860px]">
+                <thead className="bg-gray-50 text-left text-sm text-secondary-600">
+                  <tr>
+                    <th className="px-4 py-3">Subject Code</th>
+                    <th className="px-4 py-3">Type</th>
+                    <th className="px-4 py-3">Topic</th>
+                    <th className="px-4 py-3">Date</th>
+                    <th className="px-4 py-3">Time</th>
+                    <th className="px-4 py-3 w-[300px]">Description</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {allSessions.length === 0 && (
+                    <tr>
+                      <td className="px-4 py-6 text-secondary-500 text-center" colSpan={6}>
+                        No upcoming sessions available.
+                      </td>
+                    </tr>
+                  )}
+
+                  {allSessions.map((session) => {
+                    const sessionDateTime = combineSessionDateAndTime(session);
+                    const isPast = sessionDateTime < new Date();
+                    return (
+                      <tr
+                        key={session._id}
+                        className={`border-t border-gray-100 cursor-pointer hover:bg-primary-50 transition-colors ${isPast ? "text-gray-400" : "text-secondary-700"}`}
+                        onClick={() => openSessionDetails(session._id)}
+                      >
+                        <td className="px-4 py-3 font-semibold">{session.subjectCode}</td>
+                        <td className="px-4 py-3">{session.type}</td>
+                        <td className="px-4 py-3">{session.topic}</td>
+                        <td className="px-4 py-3">{formatDdMmYyyy(session.date)}</td>
+                        <td className="px-4 py-3">{session.time}</td>
+                        <td className="px-4 py-3 max-w-[300px]">
+                          <div className="line-clamp-2" title={session.description}>
+                            {renderDescription(session.description)}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
 
       <Modal
         title="Create Study Session"
