@@ -84,6 +84,8 @@ services:
       FIREBASE_PRIVATE_KEY: ${FIREBASE_PRIVATE_KEY}
       FIREBASE_CLIENT_EMAIL: ${FIREBASE_CLIENT_EMAIL}
       RAG_SERVICE_URL: ${RAG_SERVICE_URL}
+      USER_SERVICE_URL: ${USER_SERVICE_URL}
+      S3_BUCKET_NAME: ${S3_BUCKET_NAME}
       
       # - MONGO_URI=mongodbenvironment:://mongo:27017/hive
       # AWS credentials are read from .env via env_file above
@@ -92,9 +94,9 @@ services:
     #   - "3002:3002"
     networks:
       local:
-    depends_on:
-      rag-service:
-        condition: service_healthy
+    # depends_on:
+    #   rag-service:
+    #     condition: service_healthy
     restart: on-failure
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3002/health"]
@@ -135,6 +137,8 @@ services:
       RAG_SERVICE_URL: ${RAG_SERVICE_URL}
     # ports:
     #   - "3004:3004"
+    networks:
+      local:
     restart: on-failure
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3004/health"]
@@ -154,6 +158,8 @@ services:
       RAG_SERVICE_URL: ${RAG_SERVICE_URL}
     # ports:
     #   - "3005:3005"
+    networks:
+      local:
     restart: on-failure
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3005/health"]
@@ -192,8 +198,32 @@ services:
       FIREBASE_PRIVATE_KEY: ${FIREBASE_PRIVATE_KEY}
       FIREBASE_CLIENT_EMAIL: ${FIREBASE_CLIENT_EMAIL}
       RAG_SERVICE_URL: ${RAG_SERVICE_URL}
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+      PGVECTOR_HOST: ${PGVECTOR_HOST}
+      PGVECTOR_PORT: ${PGVECTOR_PORT}
+      PGVECTOR_DATABASE: ${PGVECTOR_DATABASE}
+      PGVECTOR_USER: ${PGVECTOR_USER}
+      PGVECTOR_PASSWORD: ${PGVECTOR_PASSWORD}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+      AWS_REGION: ${AWS_REGION}
+      S3_BUCKET_NAME: ${S3_BUCKET_NAME}
+      EMBEDDING_MODEL: ${EMBEDDING_MODEL}
+      EMBEDDING_DIMENSIONS: ${EMBEDDING_DIMENSIONS}
+      GEMINI_MODEL: ${GEMINI_MODEL}
+      TOP_K_CHUNKS: ${TOP_K_CHUNKS}
+      MIN_SIMILARITY_SCORE: ${MIN_SIMILARITY_SCORE}
+      CHUNK_SIZE: ${CHUNK_SIZE}
+      CHUNK_OVERLAP: ${CHUNK_OVERLAP}
+      RESOURCE_SERVICE_URL: ${RESOURCE_SERVICE_URL}
+      OUT_OF_SYLLABUS_THRESHOLD: ${OUT_OF_SYLLABUS_THRESHOLD}
     # ports:
     #   - "8000:8000"
+    networks:
+      local:
+    depends_on:
+      pgvector:
+        condition: service_healthy
     restart: on-failure
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
@@ -205,25 +235,27 @@ services:
   frontend:
     # profiles:
     #   - current
-    build: ./frontend
-    environment:
-      VITE_FIREBASE_API_KEY: ${VITE_FIREBASE_API_KEY}
-      VITE_FIREBASE_AUTH_DOMAIN: ${VITE_FIREBASE_AUTH_DOMAIN}
-      VITE_FIREBASE_PROJECT_ID: ${VITE_FIREBASE_PROJECT_ID}
-      VITE_FIREBASE_STORAGE_BUCKET: ${VITE_FIREBASE_STORAGE_BUCKET}
-      VITE_FIREBASE_MESSAGING_SENDER_ID: ${VITE_FIREBASE_MESSAGING_SENDER_ID}
-      VITE_FIREBASE_APP_ID: ${VITE_FIREBASE_APP_ID}
-      VITE_FIREBASE_MEASUREMENT_ID: ${VITE_FIREBASE_MEASUREMENT_ID}
-      VITE_API_GATEWAY_URL: ${VITE_API_GATEWAY_URL}
-      VITE_AUTH_SERVICE_URL: ${VITE_BASE_URL}
-      VITE_USER_SERVICE_URL: ${VITE_BASE_URL}
-      VITE_RESOURCE_SERVICE_URL: ${VITE_BASE_URL}
-      VITE_CHAT_SERVICE_URL: ${VITE_BASE_URL}
-      VITE_NOTE_SERVICE_URL: ${VITE_BASE_URL}
-      VITE_PROGRESS_SERVICE_URL: ${VITE_BASE_URL}
-      VITE_SESSION_SERVICE_URL: ${VITE_BASE_URL}
-      VITE_RAG_SERVICE_URL: ${VITE_BASE_URL}
-      NGINX_APP0_DOMAIN: ${NGINX_APP0_DOMAIN}
+    build: 
+    # env_file: .env
+      context: ./frontend
+      args:
+        VITE_FIREBASE_API_KEY: ${VITE_FIREBASE_API_KEY}
+        VITE_FIREBASE_AUTH_DOMAIN: ${VITE_FIREBASE_AUTH_DOMAIN}
+        VITE_FIREBASE_PROJECT_ID: ${VITE_FIREBASE_PROJECT_ID}
+        VITE_FIREBASE_STORAGE_BUCKET: ${VITE_FIREBASE_STORAGE_BUCKET}
+        VITE_FIREBASE_MESSAGING_SENDER_ID: ${VITE_FIREBASE_MESSAGING_SENDER_ID}
+        VITE_FIREBASE_APP_ID: ${VITE_FIREBASE_APP_ID}
+        VITE_FIREBASE_MEASUREMENT_ID: ${VITE_FIREBASE_MEASUREMENT_ID}
+        VITE_API_GATEWAY_URL: ${VITE_API_GATEWAY_URL}
+        VITE_AUTH_SERVICE_URL: ${VITE_BASE_URL}
+        VITE_USER_SERVICE_URL: ${VITE_BASE_URL}
+        VITE_RESOURCE_SERVICE_URL: ${VITE_BASE_URL}
+        VITE_CHAT_SERVICE_URL: ${VITE_BASE_URL}
+        VITE_NOTE_SERVICE_URL: ${VITE_BASE_URL}
+        VITE_PROGRESS_SERVICE_URL: ${VITE_BASE_URL}
+        VITE_SESSION_SERVICE_URL: ${VITE_BASE_URL}
+        VITE_RAG_SERVICE_URL: ${VITE_BASE_URL}
+        NGINX_APP0_DOMAIN: ${NGINX_APP0_DOMAIN}
     ports:
       - "80:80"
     networks:
@@ -239,6 +271,14 @@ services:
         condition: service_healthy
       chat-service:
         condition: service_healthy
+      pgvector:
+        condition: service_healthy
+      progress-service:
+        condition: service_healthy
+      note-service:
+        condition: service_healthy
+      rag-service:
+        condition: service_healthy
     restart: on-failure
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:80"]
@@ -246,6 +286,32 @@ services:
       timeout: 5s
       retries: 5
       start_period: 30s
+
+
+  pgvector:
+    image: pgvector/pgvector:pg16
+    # build: ./services/pgvector
+    container_name: hive-pgvector
+    environment:
+      POSTGRES_USER: ${PGVECTOR_USER}
+      POSTGRES_PASSWORD: ${PGVECTOR_PASSWORD}
+      POSTGRES_DB: ${PGVECTOR_DATABASE}
+    ports:
+      - "5432:5432"
+    networks:
+      local:
+    volumes:
+      - pgvector_data:/var/lib/postgresql/data
+      - ./init/pgvector-init.sql:/docker-entrypoint-initdb.d/01-init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${PGVECTOR_USER} -d ${PGVECTOR_DATABASE}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    
+
+volumes:
+  pgvector_data:
 
 
 

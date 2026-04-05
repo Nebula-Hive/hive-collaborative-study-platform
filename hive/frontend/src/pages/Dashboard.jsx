@@ -8,7 +8,6 @@ import UpcomingTasks from "@/components/UpcomingTasks";
 import GPAWidget from "@/components/GPAWidget";
 
 
-
 export default function Dashboard() {
   const { authData } = useAuth();
   const displayName = authData?.name || "Student";
@@ -21,10 +20,6 @@ export default function Dashboard() {
       setLoading(true);
       try {
         const sessions = await getAllSessions();
-    const apiUrl = `${process.env.VITE_USER_SERVICE_URL}/api/studysession/`;
-    axios.get(apiUrl)
-      .then((res) => {
-        const sessions = res.data;
         const todayColombo = new Date();
         todayColombo.setHours(0, 0, 0, 0);
 
