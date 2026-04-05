@@ -48,9 +48,10 @@ export const getResourceById = async (resourceId) => {
   return response.data;
 };
 
-export const getDownloadUrl = async (resourceId) => {
+export const getDownloadUrl = async (resourceId, isDownload = false) => {
+  const query = isDownload ? "?download=true" : "";
   const response = await instance.resourceService.get(
-    `/resources/${encodeURIComponent(resourceId)}/download`,
+    `/resources/${encodeURIComponent(resourceId)}/download${query}`,
     {
       headers: instance.defaultHeaders(),
     }

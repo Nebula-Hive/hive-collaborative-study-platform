@@ -173,7 +173,7 @@ export default function Resources() {
     }
   };
 
-  const handleDownload = async (resourceId) => {
+  const handleDownload = async (resourceId, isDownload = false) => {
     if (!resourceId) {
       toast.error("Invalid resource. Please refresh and try again.");
       return;
@@ -181,12 +181,13 @@ export default function Resources() {
 
     try {
       setDownloadingResourceId(resourceId);
-      const response = await getDownloadUrl(resourceId);
+      const response = await getDownloadUrl(resourceId, isDownload);
       if (response?.presignedUrl) {
         // Use an anchor click to avoid popup blockers on async window.open calls.
         const downloadAnchor = document.createElement("a");
         downloadAnchor.href = response.presignedUrl;
-        downloadAnchor.target = "_self";
+        downloadAnchor.target = "_blank";
+        if (isDownload) downloadAnchor.download = "download";
         downloadAnchor.rel = "noopener noreferrer";
         document.body.appendChild(downloadAnchor);
         downloadAnchor.click();
@@ -269,7 +270,8 @@ export default function Resources() {
             {list.map((resource) => (
               <div
                 key={resource.resourceId}
-                className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition"
+                className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition cursor-pointer"
+                onClick={() => handleDownload(resource.resourceId)}
               >
                 <div className="flex items-start justify-between gap-4">
                   <div className="min-w-0 flex-1">
@@ -303,7 +305,11 @@ export default function Resources() {
                   <div className="flex flex-col gap-2 shrink-0">
                     <button
                       type="button"
-                      onClick={() => handleDownload(resource.resourceId)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        // pass true to indicate intent to download
+                        handleDownload(resource.resourceId, true);
+                      }}
                       disabled={downloadingResourceId === resource.resourceId}
                       className="inline-flex items-center justify-center gap-2 rounded-md py-2 px-4 bg-gray-800 text-white shadow-sm hover:bg-gray-900 transition-all text-sm font-medium disabled:opacity-50"
                     >
@@ -313,7 +319,10 @@ export default function Resources() {
                     {canManageResources && (
                       <button
                         type="button"
-                        onClick={() => openDeleteModal(resource)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openDeleteModal(resource);
+                        }}
                         className="bg-danger-500 text-white px-3 py-2 text-sm font-medium hover:opacity-90 rounded-md"
                       >
                         Delete
