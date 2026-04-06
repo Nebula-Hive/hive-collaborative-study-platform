@@ -579,7 +579,17 @@ export default function ProgressTracker() {
   }, [searchQuery, batchFilter, summaryList]);
 
   const batchOptions = useMemo(() => {
-    return [...new Set(summaryList.map((s) => s.level).filter(Boolean))];
+    return [...new Set(summaryList.map((s) => s.level).filter(Boolean))].sort((a, b) => {
+      const numA = Number(a);
+      const numB = Number(b);
+      const bothNumeric = !Number.isNaN(numA) && !Number.isNaN(numB);
+
+      if (bothNumeric) {
+        return numB - numA;
+      }
+
+      return String(b).localeCompare(String(a));
+    });
   }, [summaryList]);
 
   const validationError = useMemo(() => {
