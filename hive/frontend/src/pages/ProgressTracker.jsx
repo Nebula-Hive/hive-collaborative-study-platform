@@ -547,7 +547,8 @@ export default function ProgressTracker() {
       loadAdminSummary();
       return;
     }
-    const ownUserId = isPrivilegedRole ? user?.uid : undefined;
+    const isAdminLikeRole = role === "admin" || role === "superadmin";
+    const ownUserId = isAdminLikeRole ? user?.uid : undefined;
     loadStudentProgress(ownUserId);
   }, [isAdminUser, isPrivilegedRole, user?.uid]);
 
@@ -1355,7 +1356,9 @@ export default function ProgressTracker() {
                                         <span className="font-semibold">{subject.subjectCode}</span> - {subject.subjectName}
                                         <span className="text-xs text-secondary-500 ml-2">({subject.creditHours} credits)</span>
                                       </div>
-                                      <div className="font-bold text-secondary-800">{subject.recommendedGrade}</div>
+                                      <div className="w-[2ch] text-left font-mono font-bold text-secondary-800">
+                                        {subject.recommendedGrade}
+                                      </div>
                                     </div>
                                   ))}
                                 </div>

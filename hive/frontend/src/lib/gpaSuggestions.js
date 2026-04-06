@@ -20,7 +20,7 @@ const GRADE_POINTS = {
 
 const GRADE_ORDER = ["A+", "A", "A-", "B+", "B", "B-", "C+", "C", "C-", "D+", "D", "E"];
 const HIGH_GRADES = new Set(["A+", "A", "A-", "B+", "B"]);
-const MINIMUM_GRADE_PATH = ["C", "B", "A"];
+const MINIMUM_GRADE_PATH = ["C", "C+", "B-", "B", "B+", "A-", "A"];
 
 const round2 = (value) => Number((value || 0).toFixed(2));
 
@@ -406,11 +406,11 @@ export const generateGPASuggestions = ({
     result.isClosestFallback = !ranked.isAchievable;
 
     if (ranked.isAchievable) {
-      result.message = `Minimum required grades (starting from C -> B -> A) found for your next semester courses. Required semester GPA: ${round2(requiredSemesterGPA).toFixed(2)}.`;
+      result.message = `Minimum required grades (starting from C -> C+ -> B- -> B -> B+ -> A- -> A) found for your next semester courses. Required semester GPA: ${round2(requiredSemesterGPA).toFixed(2)}.`;
     } else if (requiredSemesterGPA > 4.0) {
       result.message = `Not achievable: You need a semester GPA of ${round2(requiredSemesterGPA).toFixed(2)}, which exceeds the maximum of 4.0. Showing the closest ${ranked.scenarios.length} plans with your next semester courses.`;
     } else {
-      result.message = `Exact target cannot be reached with C/B/A limits for these courses. Showing the closest ${ranked.scenarios.length} plans.`;
+      result.message = `Exact target cannot be reached with C-to-A limits for these courses. Showing the closest ${ranked.scenarios.length} plans.`;
     }
 
     return result;
