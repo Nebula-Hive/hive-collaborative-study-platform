@@ -12,6 +12,12 @@ const USER_SERVICE_URL = process.env.USER_SERVICE_URL || 'http://localhost:3001'
 const NOTIFICATION_SERVICE_URL = process.env.NOTIFICATION_SERVICE_URL || 'http://localhost:3007';
 const SERVICE_SECRET_KEY = process.env.SERVICE_SECRET_KEY || 'hive_internal_service_key_2025';
 
+const RESOURCE_TYPE_LABELS = {
+  past_paper: 'Past Paper',
+  resource_book: 'Resource Book',
+  note: 'Note',
+};
+
 const getAuthorizationHeader = (req) => req.headers.authorization || '';
 
 const sendNotificationSafely = async (payload) => {
@@ -207,10 +213,13 @@ const uploadResource = async (req, res) => {
       }
     }
 
+    const typeLabel = RESOURCE_TYPE_LABELS[resource.resourceType] || 'Resource';
+    const displayName = resource.title || resource.fileName || typeLabel;
+
     await sendNotificationSafely({
       userIds: 'all_students',
-      title: 'New Resource Uploaded',
-      message: `New ${resource.resourceType} uploaded for ${resource.subjectName}: ${resource.title}`,
+      title: `New ${typeLabel} Uploaded`,
+      message: `${typeLabel} uploaded for ${resource.subjectName}: ${displayName}`,
       type: 'resource',
       data: {
         resourceId: resource.resourceId,
