@@ -18,9 +18,7 @@ cd "$HIVE_DIR" || {
   exit 1
 }
 
-echo -e "${BLUE}╔════════════════════════════════════════════════════════╗${NC}"
-echo -e "${BLUE}║         Hive Platform - Service Health Check          ║${NC}"
-echo -e "${BLUE}╚════════════════════════════════════════════════════════╝${NC}"
+echo -e "${BLUE}         Hive Platform - Service Health Check          ${NC}"
 echo ""
 
 ALL_HEALTHY=true
@@ -78,17 +76,14 @@ check_service "Frontend" "http://localhost:5173"
 echo ""
 
 # Summary
-echo -e "${BLUE}╔════════════════════════════════════════════════════════╗${NC}"
 if [ "$ALL_HEALTHY" = true ]; then
-  echo -e "${GREEN}║           ✓  All Services are Healthy!  ✓             ║${NC}"
-  echo -e "${BLUE}╚════════════════════════════════════════════════════════╝${NC}"
+  echo -e "${GREEN}           ✓  All Services are Healthy!  ✓             ${NC}"
   echo ""
   echo -e "${GREEN}✓ System is ready to use!${NC}"
   echo ""
   echo -e "${BLUE}Access your application at: ${GREEN}http://localhost:5173${NC}"
 else
-  echo -e "${RED}║            ⚠ Some Services are Down ⚠                 ║${NC}"
-  echo -e "${BLUE}╚════════════════════════════════════════════════════════╝${NC}"
+  echo -e "${RED}            ⚠ Some Services are Down ⚠                 ${NC}"
   echo ""
   echo -e "${YELLOW}⚠ Some services are not responding${NC}"
   echo ""

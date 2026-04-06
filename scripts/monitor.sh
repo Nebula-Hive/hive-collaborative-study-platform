@@ -44,18 +44,14 @@ tput civis
 # Trap to show cursor on exit
 trap 'tput cnorm; exit' INT TERM EXIT
 
-echo -e "${CYAN}╔════════════════════════════════════════════════════════════════╗${NC}"
-echo -e "${CYAN}║          🐝  HIVE PLATFORM - LIVE STATUS MONITOR  🐝           ║${NC}"
-echo -e "${CYAN}║                  Press Ctrl+C to exit                          ║${NC}"
-echo -e "${CYAN}╚════════════════════════════════════════════════════════════════╝${NC}"
+echo -e "${CYAN}             HIVE PLATFORM - LIVE STATUS MONITOR             ${NC}"
+echo -e "${CYAN}                  Press Ctrl+C to exit                          ${NC}"
 
 while true; do
   # Move cursor to top
   tput cup 4 0
   
-  echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
   echo -e "$(date '+%Y-%m-%d %H:%M:%S')                                          "
-  echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
   echo ""
   
   # Database
