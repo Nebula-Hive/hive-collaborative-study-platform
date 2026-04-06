@@ -30,9 +30,7 @@ cd "$HIVE_DIR" || {
   exit 1
 }
 
-echo -e "${BLUE}╔════════════════════════════════════════════════════════╗${NC}"
-echo -e "${BLUE}║    Hive Platform - Waiting for Services to be Ready   ║${NC}"
-echo -e "${BLUE}╔════════════════════════════════════════════════════════╗${NC}"
+echo -e "${BLUE}    Hive Platform - Waiting for Services to be Ready   ${NC}"
 echo ""
 
 # List of services to check
@@ -98,9 +96,7 @@ while true; do
   
   if [ $ELAPSED -gt $MAX_WAIT ]; then
     echo ""
-    echo -e "${RED}╔════════════════════════════════════════════════════════╗${NC}"
-    echo -e "${RED}║  Timeout: Services did not become healthy in time     ║${NC}"
-    echo -e "${RED}╚════════════════════════════════════════════════════════╝${NC}"
+    echo -e "${RED}  Timeout: Services did not become healthy in time     ${NC}"
     echo ""
     echo -e "${YELLOW}Run 'docker compose logs <service-name>' to check errors${NC}"
     exit 1
@@ -146,29 +142,25 @@ done
 safe_clear
 
 echo ""
-echo -e "${GREEN}╔════════════════════════════════════════════════════════╗${NC}"
-echo -e "${GREEN}║           ✓  All Services are Healthy!  ✓             ║${NC}"
-echo -e "${GREEN}╚════════════════════════════════════════════════════════╝${NC}"
+echo -e "${GREEN}           ✓  All Services are Healthy!  ✓             ${NC}"
 echo ""
 echo -e "${BLUE}Service Status:${NC}"
 for service in "${SERVICES[@]}"; do
   echo -e "  ${GREEN}✓${NC} $service - healthy"
 done
 echo ""
-echo -e "${BLUE}╔════════════════════════════════════════════════════════╗${NC}"
-echo -e "${BLUE}║              Access Your Services:                     ║${NC}"
-echo -e "${BLUE}╠════════════════════════════════════════════════════════╣${NC}"
-echo -e "${BLUE}║${NC}  Frontend:        ${GREEN}http://localhost:5173${NC}"
-echo -e "${BLUE}║${NC}  API Gateway:     ${GREEN}http://localhost:4000${NC}"
-echo -e "${BLUE}║${NC}  Auth Service:    ${GREEN}http://localhost:3000${NC}"
-echo -e "${BLUE}║${NC}  User Service:    ${GREEN}http://localhost:3001${NC}"
-echo -e "${BLUE}║${NC}  Resource Service:${GREEN}http://localhost:3002${NC}"
-echo -e "${BLUE}║${NC}  Chat Service:    ${GREEN}http://localhost:3003${NC}"
-echo -e "${BLUE}║${NC}  Note Service:    ${GREEN}http://localhost:3004${NC}"
-echo -e "${BLUE}║${NC}  Progress Service:${GREEN}http://localhost:3005${NC}"
-echo -e "${BLUE}║${NC}  Session Service: ${GREEN}http://localhost:3006${NC}"
-echo -e "${BLUE}║${NC}  RAG Service:     ${GREEN}http://localhost:8000${NC}"
-echo -e "${BLUE}╚════════════════════════════════════════════════════════╝${NC}"
+echo -e "${BLUE}              Access Your Services:                     ${NC}"
+echo ""
+echo -e "${BLUE}${NC}  Frontend:        ${GREEN}http://localhost:5173${NC}"
+echo -e "${BLUE}${NC}  API Gateway:     ${GREEN}http://localhost:4000${NC}"
+echo -e "${BLUE}${NC}  Auth Service:    ${GREEN}http://localhost:3000${NC}"
+echo -e "${BLUE}${NC}  User Service:    ${GREEN}http://localhost:3001${NC}"
+echo -e "${BLUE}${NC}  Resource Service:${GREEN}http://localhost:3002${NC}"
+echo -e "${BLUE}${NC}  Chat Service:    ${GREEN}http://localhost:3003${NC}"
+echo -e "${BLUE}${NC}  Note Service:    ${GREEN}http://localhost:3004${NC}"
+echo -e "${BLUE}${NC}  Progress Service:${GREEN}http://localhost:3005${NC}"
+echo -e "${BLUE}${NC}  Session Service: ${GREEN}http://localhost:3006${NC}"
+echo -e "${BLUE}${NC}  RAG Service:     ${GREEN}http://localhost:8000${NC}"
 echo ""
 echo -e "${YELLOW}💡 Tip: Run './check-health.sh' anytime to check service status${NC}"
 echo ""

@@ -24,12 +24,9 @@ safe_clear() {
 safe_clear
 
 echo ""
-echo -e "${CYAN}╔══════════════════════════════════════════════════════════╗${NC}"
-echo -e "${CYAN}║                                                          ║${NC}"
-echo -e "${CYAN}║              🐝  HIVE PLATFORM STARTUP  🐝               ║${NC}"
-echo -e "${CYAN}║          Collaborative Study Platform Setup              ║${NC}"
-echo -e "${CYAN}║                                                          ║${NC}"
-echo -e "${CYAN}╚══════════════════════════════════════════════════════════╝${NC}"
+
+echo -e "${CYAN}              🐝  HIVE PLATFORM STARTUP  🐝               ${NC}"
+echo -e "${CYAN}          Collaborative Study Platform Setup             ${NC}"
 echo ""
 
 # Check if Docker is running
@@ -189,9 +186,7 @@ if [ ! -f .env ]; then
   echo ""
 fi
 
-echo -e "${BLUE}╔══════════════════════════════════════════════════════════╗${NC}"
-echo -e "${BLUE}║                   Starting Services                      ║${NC}"
-echo -e "${BLUE}╚══════════════════════════════════════════════════════════╝${NC}"
+echo -e "${BLUE}                   Starting Services                      ${NC}"
 echo ""
 
 # Start services
@@ -247,9 +242,7 @@ echo -e "${GREEN}✓ Docker Compose started successfully${NC}"
 echo ""
 
 # Wait for services to become healthy
-echo -e "${BLUE}╔══════════════════════════════════════════════════════════╗${NC}"
-echo -e "${BLUE}║              Waiting for Services to be Healthy          ║${NC}"
-echo -e "${BLUE}╚══════════════════════════════════════════════════════════╝${NC}"
+echo -e "${BLUE}              Waiting for Services to be Healthy          ${NC}"
 echo ""
 echo -e "${YELLOW}This usually takes 1-2 minutes...${NC}"
 echo ""
@@ -259,11 +252,7 @@ echo ""
 
 if [ $? -eq 0 ]; then
   echo ""
-  echo -e "${CYAN}╔══════════════════════════════════════════════════════════╗${NC}"
-  echo -e "${CYAN}║                                                          ║${NC}"
-  echo -e "${CYAN}║           🎉  HIVE PLATFORM IS READY!  🎉               ║${NC}"
-  echo -e "${CYAN}║                                                          ║${NC}"
-  echo -e "${CYAN}╚══════════════════════════════════════════════════════════╝${NC}"
+  echo -e "${CYAN}]             HIVE PLATFORM IS READY!                 ${NC}"
   echo ""
   echo -e "${BLUE}Quick Commands:${NC}"
   echo -e "  ${GREEN}$SCRIPT_DIR/check-health.sh${NC}     - Check service health status"
