@@ -186,7 +186,25 @@ if [ ! -f .env ]; then
   echo ""
 fi
 
-echo -e "${BLUE}                   Starting Services                      ${NC}"
+echo -e "${BLUE}╔══════════════════════════════════════════════════════════╗${NC}"
+echo -e "${BLUE}║                   Starting Services                      ║${NC}"
+echo -e "${BLUE}╚══════════════════════════════════════════════════════════╝${NC}"
+echo ""
+
+# Stop any existing containers
+echo -e "${YELLOW}Stopping any existing containers...${NC}"
+#docker compose down > /dev/null 2>&1
+# Stop any services running already.
+# docker compose stop
+docker compose down
+
+# Clean docker system wide settings.
+docker system prune -a -f 
+
+# Clean some docker volumes.
+docker volume prune -f
+
+echo -e "${GREEN}✓ Cleaned up existing containers${NC}"
 echo ""
 
 # Start services
@@ -203,19 +221,15 @@ fi
 echo -e "${BLUE}This may take a few minutes on first run...${NC}"
 echo ""
 
-start_compose() {
-  case "$compose_mode" in
-    full)
-      docker compose up -d --build
-      ;;
-    targeted)
-      docker compose up -d --build --no-deps "${compose_targets[@]}"
-      ;;
-    *)
-      docker compose up -d
-      ;;
-  esac
-}
+# Build all the images (including base images).
+docker compose build
+
+# Create containers of the docker stack.
+docker compose  up --no-start
+
+# Start the docker stack.
+docker compose start
+
 
 start_compose
 compose_status=$?
