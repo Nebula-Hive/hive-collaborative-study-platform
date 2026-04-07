@@ -783,3 +783,52 @@
   }
 
 }
+
+/* React Quill Custom Styling */
+.quill-container .ql-toolbar {
+  border: none !important;
+  border-bottom: 1px solid #f1f5f9 !important;
+  background: #f8fafc;
+  padding: 8px 12px !important;
+}
+
+.quill-container .ql-container {
+  border: none !important;
+  font-family: inherit !important;
+}
+
+.quill-container .ql-editor {
+  font-size: 1rem !important;
+  color: #1e293b !important;
+  padding: 16px !important;
+  line-height: 1.6;
+}
+
+.quill-container .ql-editor p {
+  margin-bottom: 1em;
+}
+
+.quill-container .ql-editor.ql-blank::before {
+  color: #94a3b8 !important;
+  font-style: normal !important;
+  left: 16px !important;
+}
+
+.quill-container .ql-snow .ql-stroke {
+  stroke: #475569 !important;
+}
+
+.quill-container .ql-snow .ql-picker {
+  color: #475569 !important;
+}
+
+.quill-container .ql-snow .ql-fill {
+  fill: #475569 !important;
+}
+
+.quill-container .ql-snow.ql-toolbar button:hover .ql-stroke,
+.quill-container .ql-snow.ql-toolbar button:hover .ql-fill,
+.quill-container .ql-snow.ql-toolbar button.ql-active .ql-stroke,
+.quill-container .ql-snow.ql-toolbar button.ql-active .ql-fill {
+  stroke: #0f172a !important;
+}
