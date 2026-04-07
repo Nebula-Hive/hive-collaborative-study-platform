@@ -43,7 +43,7 @@ services:
     build: ~
     
   certbot:
-    image: ${ECR_REGISTRY}/hive/frontend:${IMAGE_TAG}
+    image: certbot/dns-google:latest
     restart: unless-stopped
 
   pgvector:
