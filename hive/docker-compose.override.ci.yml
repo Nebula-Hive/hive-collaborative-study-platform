@@ -79,9 +79,9 @@ services:
       PGVECTOR_USER: hive_user
       PGVECTOR_PASSWORD: hive_pass
       PORT: 8000
-      GEMINI_API_KEY: AIzaSyA7LkxkcaTLgP6tJJvuSwfXXAkry71d9fE
+      GEMINI_API_KEY: AI$$$$$$A7Lkx0000000SwfXX$$$$$$$
       S3_AWS_ACCESS_KEY_ID: AKIA######DX63CWOFC
-      S3_AWS_SECRET_ACCESS_KEY: 4IJr7i/M+zCCo1WrIHMNFagKug6aKVpebSmSyM9K
+      S3_AWS_SECRET_ACCESS_KEY: 4IJr7i/M+zC22222226aKVpebS3339K
       S3_AWS_REGION: ap-southeast-1
       S3_BUCKET_NAME: hive-study-resources
       EMBEDDING_MODEL: models/gemini-embedding-001
@@ -93,6 +93,14 @@ services:
       CHUNK_OVERLAP: 200
       RESOURCE_SERVICE_URL: http://localhost:3002
       OUT_OF_SYLLABUS_THRESHOLD: 0.5
+    
+  certbot:
+    restart: "no"
+    healthcheck:
+      interval: 5s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
     
 
   frontend:
